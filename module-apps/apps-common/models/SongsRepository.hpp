@@ -46,17 +46,21 @@ namespace app::music
     {
       public:
         using OnGetMusicFilesListCallback =
-            std::function<bool(const std::vector<db::multimedia_files::MultimediaFilesRecord> &, unsigned int)>;
+            std::function<bool(const std::vector<db::multimedia_files::MultimediaFilesRecord> &, unsigned)>;
+        using OnGetAlbumsListCallback = std::function<bool(const std::vector<db::multimedia_files::Album> &, unsigned)>;
 
         virtual ~AbstractSongsRepository() noexcept = default;
 
         virtual void initCache()                                                           = 0;
-        virtual void getMusicFilesList(uint32_t offset,
-                                       uint32_t limit,
+        virtual void getMusicFilesList(std::uint32_t offset,
+                                       std::uint32_t limit,
                                        const OnGetMusicFilesListCallback &callback)        = 0;
         virtual void getMusicFilesListByPaths(std::uint32_t offset,
                                               std::uint32_t limit,
                                               const OnGetMusicFilesListCallback &callback) = 0;
+        virtual void getMusicAlbumsList(std::uint32_t offset,
+                                        std::uint32_t limit,
+                                        const OnGetAlbumsListCallback &callback)           = 0;
         virtual std::string getNextFilePath(const std::string &filePath) const             = 0;
         virtual std::string getPreviousFilePath(const std::string &filePath) const         = 0;
         virtual std::optional<db::multimedia_files::MultimediaFilesRecord> getRecord(
@@ -72,10 +76,15 @@ namespace app::music
                         const std::vector<std::string> &pathPrefixes);
 
         void initCache() override;
-        void getMusicFilesList(uint32_t offset, uint32_t limit, const OnGetMusicFilesListCallback &callback) override;
+        void getMusicFilesList(std::uint32_t offset,
+                               std::uint32_t limit,
+                               const OnGetMusicFilesListCallback &callback) override;
         void getMusicFilesListByPaths(std::uint32_t offset,
                                       std::uint32_t limit,
                                       const OnGetMusicFilesListCallback &callback) override;
+        void getMusicAlbumsList(std::uint32_t offset,
+                                std::uint32_t limit,
+                                const OnGetAlbumsListCallback &callback) override;
         std::string getNextFilePath(const std::string &filePath) const override;
         std::string getPreviousFilePath(const std::string &filePath) const override;
         std::optional<db::multimedia_files::MultimediaFilesRecord> getRecord(
@@ -99,7 +108,8 @@ namespace app::music
         /// collection of music files displayed in the list view
         FilesCache musicFilesViewCache;
         /// collection of music files currently playing
-        FilesCache musicFilesModelCache;
+        FilesCache
+            musicFilesModelCache; // Maybe this can be removed completely TODO no because what if user leaves the window
 
         std::size_t getCachedFileIndex(const std::string &filePath) const;
         std::uint32_t calculateOffset();
@@ -118,7 +128,7 @@ namespace app::music
                                unsigned int repoRecordsCount);
         /// overwrite the musicFiles model cache with new data from the given index
         bool newDataCallback(const std::vector<db::multimedia_files::MultimediaFilesRecord> &records,
-                             unsigned int repoRecordsCount,
+                             unsigned int repoRecordsCount, // TODO remove int, cleanup consts
                              std::uint32_t offset);
         /// adding new data to the musicFiles model cache at the end of the list, with the first records being deleted
         /// so that the cache size is not changed

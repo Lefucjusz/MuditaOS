@@ -1,11 +1,10 @@
-﻿// Copyright (c) 2017-2021, Mudita Sp. z.o.o. All rights reserved.
+﻿// Copyright (c) 2017-2023, Mudita Sp. z.o.o. All rights reserved.
 // For licensing, see https://github.com/mudita/MuditaOS/LICENSE.md
 
 #pragma once
+
 #include "Record.hpp"
-
 #include <Tables/MultimediaFilesTable.hpp>
-
 #include <string>
 
 namespace db::multimedia_files
@@ -24,8 +23,12 @@ namespace db::multimedia_files::query
     class Get;
     class GetAlbumsLimited;
     class GetAlbumsLimitedResult;
+    class GetAlbumsWithMetadataLimited;
+    class GetAlbumsWithMetadataLimitedResult;
     class GetArtistsLimited;
     class GetArtistsLimitedResult;
+    class GetArtistsWithMetadataLimited;
+    class GetArtistsWithMetadataLimitedResult;
     class GetByPath;
     class GetCount;
     class GetCountAlbums;
@@ -83,10 +86,16 @@ namespace db::multimedia_files
             const std::shared_ptr<db::multimedia_files::query::GetCountArtists> &query);
         std::unique_ptr<db::multimedia_files::query::GetArtistsLimitedResult> runQueryImplGetArtistsLimited(
             const std::shared_ptr<db::multimedia_files::query::GetArtistsLimited> &query);
+        std::unique_ptr<db::multimedia_files::query::GetArtistsWithMetadataLimitedResult>
+        runQueryImplGetArtistsWithMetadataLimited(
+            const std::shared_ptr<db::multimedia_files::query::GetArtistsWithMetadataLimited> &query);
         std::unique_ptr<db::multimedia_files::query::GetCountResult> runQueryImplGetCountAlbums(
             const std::shared_ptr<db::multimedia_files::query::GetCountAlbums> &query);
         std::unique_ptr<db::multimedia_files::query::GetAlbumsLimitedResult> runQueryImplGetAlbumsLimited(
             const std::shared_ptr<db::multimedia_files::query::GetAlbumsLimited> &query);
+        std::unique_ptr<db::multimedia_files::query::GetAlbumsWithMetadataLimitedResult>
+        runQueryImplGetAlbumsWithMetadataLimited(
+            const std::shared_ptr<db::multimedia_files::query::GetAlbumsWithMetadataLimited> &query);
         std::unique_ptr<db::multimedia_files::query::GetLimitedResult> runQueryImplGetLimited(
             const std::shared_ptr<db::multimedia_files::query::GetLimitedForArtist> &query);
         std::unique_ptr<db::multimedia_files::query::GetCountResult> runQueryImplGetCount(

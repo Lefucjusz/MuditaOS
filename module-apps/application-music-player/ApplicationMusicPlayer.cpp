@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2017-2022, Mudita Sp. z.o.o. All rights reserved.
+﻿// Copyright (c) 2017-2023, Mudita Sp. z.o.o. All rights reserved.
 // For licensing, see https://github.com/mudita/MuditaOS/LICENSE.md
 
 #include <application-music-player/ApplicationMusicPlayer.hpp>
@@ -6,11 +6,17 @@
 #include "AudioNotificationsHandler.hpp"
 
 #include <windows/MusicPlayerMainWindow.hpp>
-#include <windows/MusicPlayerAllSongsWindow.hpp>
+#include <windows/MusicPlayerAlbumsWindow.hpp>
+#include <windows/MusicPlayerSongsListWindow.hpp>
+#include <windows/MusicPlayerArtistsWindow.hpp>
 #include <apps-common/AudioOperations.hpp>
 #include <presenters/SongsPresenter.hpp>
+#include <presenters/AlbumsPresenter.hpp>
+#include <presenters/ArtistsPresenter.hpp>
 #include <models/SongsRepository.hpp>
 #include <models/SongsModel.hpp>
+#include <models/AlbumsModel.hpp>
+#include <models/ArtistsModel.hpp>
 #include <service-appmgr/Controller.hpp>
 
 #include <filesystem>
@@ -27,12 +33,20 @@ namespace app
         class MusicPlayerPriv
         {
           public:
-            std::shared_ptr<app::music::SongsModelInterface> songsModel;
+            std::shared_ptr<app::music::SongsModel> songsModel;
             std::shared_ptr<app::music_player::SongsContract::Presenter> songsPresenter;
+
+            std::shared_ptr<app::music::AlbumsModel> albumsModel;
+            std::shared_ptr<app::music_player::AlbumsContract::Presenter> albumsPresenter;
+
+            std::shared_ptr<app::music::ArtistsModel> artistsModel;
+            std::shared_ptr<app::music_player::ArtistsContract::Presenter> artistsPresenter;
+
+            std::shared_ptr<app::music::SongsRepository> songsRepository;
         };
     } // namespace music_player::internal
 
-    constexpr std::size_t applicationMusicPlayerStackSize = 5 * 1024;
+    constexpr auto applicationMusicPlayerStackSize = 1024 * 6;
 
     ApplicationMusicPlayer::ApplicationMusicPlayer(std::string name,
                                                    std::string parent,
@@ -42,23 +56,27 @@ namespace app
               std::move(name), std::move(parent), statusIndicators, startInBackground, applicationMusicPlayerStackSize),
           priv{std::make_unique<music_player::internal::MusicPlayerPriv>()}
     {
-        LOG_INFO("ApplicationMusicPlayer creating");
-
         bus.channels.push_back(sys::BusChannel::ServiceAudioNotifications);
 
-        const auto paths     = std::vector<std::string>{purefs::dir::getUserMediaPath()};
-        auto tagsFetcher     = std::make_unique<app::music::ServiceAudioTagsFetcher>(this);
-        auto songsRepository = std::make_unique<app::music::SongsRepository>(this, std::move(tagsFetcher), paths);
+        const auto paths = std::vector<std::string>{purefs::dir::getUserMediaPath()}; // TODO why here
 
-        priv->songsModel     = std::make_unique<app::music::SongsModel>(this, std::move(songsRepository));
+        auto songsCache       = std::make_unique<app::music::SongsCache>(this);
+        priv->songsRepository = std::make_shared<app::music::SongsRepository>(this, std::move(songsCache));
+
         auto audioOperations = std::make_unique<app::AsyncAudioOperations>(this);
+        priv->songsModel     = std::make_unique<app::music::SongsModel>(this, priv->songsRepository);
         priv->songsPresenter =
             std::make_unique<app::music_player::SongsPresenter>(this, priv->songsModel, std::move(audioOperations));
 
+        priv->albumsModel     = std::make_unique<app::music::AlbumsModel>(this, priv->songsRepository);
+        priv->albumsPresenter = std::make_unique<app::music_player::AlbumsPresenter>(this, priv->albumsModel);
+
+        priv->artistsModel     = std::make_unique<app::music::ArtistsModel>(this, priv->songsRepository);
+        priv->artistsPresenter = std::make_unique<app::music_player::ArtistsPresenter>(this, priv->artistsModel);
+
         // callback used when playing state is changed
-        using SongState                                 = app::music::SongState;
-        std::function<void(SongState)> autolockCallback = [this](SongState isPlaying) {
-            if (isPlaying == SongState::Playing) {
+        auto autolockCallback = [this](app::music::SongState isPlaying) {
+            if (isPlaying == app::music::SongState::Playing) {
                 LOG_DEBUG("Preventing autolock while playing track.");
                 lockPolicyHandler.set(locks::AutoLockPolicy::DetermineByAppState);
             }
@@ -71,7 +89,7 @@ namespace app
         priv->songsPresenter->setPlayingStateCallback(std::move(autolockCallback));
 
         // callback used when track is not played and we are in DetermineByAppState
-        std::function<bool()> stateLockCallback = []() -> bool { return true; };
+        auto stateLockCallback = []() -> bool { return true; };
         lockPolicyHandler.setPreventsAutoLockByStateCallback(std::move(stateLockCallback));
 
         connect(typeid(AudioStopNotification), [&](sys::Message *msg) -> sys::MessagePointer {
@@ -124,8 +142,10 @@ namespace app
 
     sys::ReturnCodes ApplicationMusicPlayer::DeinitHandler()
     {
-        priv->songsPresenter->getMusicPlayerModelInterface()->clearData();
+        priv->songsPresenter->getModel()->clearData();
         priv->songsPresenter->stop();
+        priv->albumsPresenter->getModel()->clearData();
+        priv->artistsPresenter->getModel()->clearData();
         return Application::DeinitHandler();
     }
 
@@ -135,10 +155,18 @@ namespace app
             return std::make_unique<gui::MusicPlayerMainWindow>(app, priv->songsPresenter);
         });
 
-        windowsFactory.attach(gui::name::window::all_songs_window,
-                              [&](ApplicationCommon *app, const std::string &name) {
-                                  return std::make_unique<gui::MusicPlayerAllSongsWindow>(app, priv->songsPresenter);
-                              });
+        windowsFactory.attach(gui::name::window::albums, [&](ApplicationCommon *app, const std::string &name) {
+            return std::make_unique<gui::MusicPlayerAlbumsWindow>(app, priv->albumsPresenter);
+        });
+
+        windowsFactory.attach(gui::name::window::artists, [&](ApplicationCommon *app, const std::string &name) {
+            return std::make_unique<gui::MusicPlayerArtistsWindow>(app, priv->artistsPresenter);
+        });
+
+        windowsFactory.attach(gui::name::window::songs_list, [&](ApplicationCommon *app, const std::string &name) {
+            return std::make_unique<gui::MusicPlayerSongsListWindow>(app, priv->songsPresenter);
+        });
+
         attachPopups({gui::popup::ID::Volume,
                       gui::popup::ID::Tethering,
                       gui::popup::ID::BluetoothAuthenticate,

@@ -20,8 +20,6 @@ namespace gui
     /// if requested)
     class SwitchData
     {
-        bool popup = false;
-
       protected:
         std::string description = "";
 

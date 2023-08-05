@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2021, Mudita Sp. z.o.o. All rights reserved.
+// Copyright (c) 2017-2023, Mudita Sp. z.o.o. All rights reserved.
 // For licensing, see https://github.com/mudita/MuditaOS/LICENSE.md
 
 #pragma once
@@ -23,14 +23,14 @@ namespace gui
     {
       public:
         /// number of vertical items in track's progress bar
-        static constexpr uint8_t progressBarSize = 27;
+        static constexpr auto progressBarSize = 27;
 
         /// current view mode (switching with up / down arrow)
         enum class ViewMode
         {
             START = 1, // start screen "press down arrow to choose..."
             TRACK,     // track info
-            LIBRARY    // Music library
+            LIBRARY    // music library
         };
 
         explicit MusicPlayerMainWindow(app::ApplicationCommon *app,
@@ -62,7 +62,7 @@ namespace gui
         void buildTrackProgressInterface(VBox *parent);
         void buildTrackInfoInterface(VBox *parent);
         void updateVisibleTrackData(RecordState state) noexcept;
-        void updateVisibleProgressData(void) noexcept;
+        void updateVisibleProgressData() noexcept;
 
         bool onInputTrackMode(const InputEvent &inputEvent);
 
@@ -71,6 +71,7 @@ namespace gui
 
         std::shared_ptr<app::music_player::SongsContract::Presenter> presenter;
         Label *titleText                         = nullptr;
+        Label *albumText                         = nullptr;
         Label *artistText                        = nullptr;
         Text *currentTimeText                    = nullptr;
         Text *totalTimeText                      = nullptr;
@@ -81,15 +82,15 @@ namespace gui
         Label *descriptionText                   = nullptr;
         Image *progressBarItems[progressBarSize] = {nullptr};
 
-        float currentProgress            = 0.f;
-        uint32_t currentTotalTime        = 0;
-        uint8_t currentProgressBarsBlack = 0;
+        float currentProgress                 = 0.0f;
+        std::uint32_t currentTotalTime        = 0;
+        std::uint8_t currentProgressBarsBlack = 0;
         std::string currentTitle;
+        std::string currentAlbum;
         std::string currentArtist;
         std::string currentTimeString;
         std::string currentTotalTimeString;
         bool isPermissionToChangeViewMode = false;
         bool needToDeepRedrawScreen       = false;
     };
-
 } /* namespace gui */

@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022, Mudita Sp. z.o.o. All rights reserved.
+// Copyright (c) 2017-2023, Mudita Sp. z.o.o. All rights reserved.
 // For licensing, see https://github.com/mudita/MuditaOS/LICENSE.md
 
 #include "CodecMAX98090.hpp"
@@ -363,12 +363,9 @@ CodecRetCode CodecMAX98090::SetOutputVolume(const float vol)
     switch (currentParams.outputPath) {
     case CodecParamsMAX98090::OutputPath::Headphones:
     case CodecParamsMAX98090::OutputPath::HeadphonesMono: {
-        // Scale input volume(range 0 - 10) to MAX98090 range(decibels hardcoded as specific hex values)
-        // @note:
-        // In order to pass certification max value is limited and taken from measurements 0x0B: -28dB
-        // Be carefull when changing it !!!
-        constexpr auto scale_factor      = 1.24f;
-        uint8_t volume                   = static_cast<float>(vol * scale_factor);
+        // Scale input volume (range 0 - 10) to MAX98090 range (decibels hardcoded as specific hex values)
+        constexpr auto scale_factor      = 1.8f; // Limit to -13dB
+        uint8_t volume                   = static_cast<uint8_t>(vol * scale_factor);
         max98090_reg_lhp_vol_ctrl_t lvol = {};
         max98090_reg_rhp_vol_ctrl_t rvol = {};
 
@@ -385,9 +382,9 @@ CodecRetCode CodecMAX98090::SetOutputVolume(const float vol)
     } break;
 
     case CodecParamsMAX98090::OutputPath::Earspeaker: {
-        // Scale input volume(range 0 - 10) to MAX98090 range(decibels hardcoded as specific hex values)
+        // Scale input volume (range 0 - 10) to MAX98090 range (decibels hardcoded as specific hex values)
         constexpr auto scale_factor      = 3.1f; // take the whole scale
-        uint8_t volume                   = static_cast<float>(vol * scale_factor);
+        uint8_t volume                   = static_cast<uint8_t>(vol * scale_factor);
         max98090_reg_recv_vol_ctrl_t vol = {};
 
         vol.rcvlm   = mute;
@@ -399,9 +396,9 @@ CodecRetCode CodecMAX98090::SetOutputVolume(const float vol)
 
     case CodecParamsMAX98090::OutputPath::Loudspeaker:
     case CodecParamsMAX98090::OutputPath::LoudspeakerMono: {
-        // Scale input volume(range 0 - 10) to MAX98090 range(decibels hardcoded as specific hex values)
+        // Scale input volume (range 0 - 10) to MAX98090 range (decibels hardcoded as specific hex values)
         constexpr auto scale_factor = 3.9f;
-        uint8_t volume              = static_cast<float>(vol * scale_factor) + 0x18;
+        uint8_t volume              = static_cast<uint8_t>(vol * scale_factor) + 0x18;
 
         max98090_reg_lspk_vol_ctrl_t lvol = {};
         max98090_reg_rspk_vol_ctrl_t rvol = {};

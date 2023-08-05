@@ -15,18 +15,37 @@ target_sources(application-music-player
         ApplicationMusicPlayer.cpp
         AudioNotificationsHandler.cpp
         models/SongsModel.cpp
+        models/AlbumsModel.cpp
+        models/SongsRepository.cpp
+        models/SongsCache.cpp
+        models/ArtistsModel.cpp
         presenters/SongsPresenter.cpp
+        presenters/AlbumsPresenter.cpp
+        presenters/ArtistsPresenter.cpp
         widgets/SongItem.cpp
+        widgets/FolderItem.cpp
         windows/MusicPlayerMainWindow.cpp
-        windows/MusicPlayerAllSongsWindow.cpp
+        windows/MusicPlayerAlbumsWindow.cpp
+        windows/MusicPlayerSongsListWindow.cpp
+        windows/MusicPlayerArtistsWindow.cpp
     PRIVATE
         AudioNotificationsHandler.hpp
         data/MusicPlayerStyle.hpp
+        data/SongsListWindowData.hpp
         models/SongsModel.hpp
+        models/AlbumsModel.hpp
+        models/SongsRepository.hpp
+        models/SongsCache.hpp
+        models/ArtistsModel.cpp
         presenters/SongsPresenter.hpp
+        presenters/AlbumsPresenter.hpp
+        presenters/ArtistsPresenter.hpp
         widgets/SongItem.hpp
-        windows/MusicPlayerMainWindow.cpp
-        windows/MusicPlayerAllSongsWindow.hpp
+        widgets/FolderItem.hpp
+        windows/MusicPlayerMainWindow.hpp
+        windows/MusicPlayerAlbumsWindow.hpp
+        windows/MusicPlayerSongsListWindow.hpp
+        windows/MusicPlayerArtistsWindow.hpp
     PUBLIC
         include/application-music-player/ApplicationMusicPlayer.hpp
 )
@@ -40,9 +59,7 @@ target_link_libraries(application-music-player
         service-audio
         utils-time
     PUBLIC
-        apps-common
         module-audio
-        tagsfetcher
 )
 
 if (${ENABLE_TESTS})

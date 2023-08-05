@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2021, Mudita Sp. z.o.o. All rights reserved.
+// Copyright (c) 2017-2023, Mudita Sp. z.o.o. All rights reserved.
 // For licensing, see https://github.com/mudita/MuditaOS/LICENSE.md
 
 #pragma once
@@ -7,7 +7,6 @@
 #include <queries/Filter.hpp>
 #include <Interface/MultimediaFilesRecord.hpp>
 #include <Common/Common.hpp>
-
 #include <string>
 
 namespace db::multimedia_files::query
@@ -18,6 +17,7 @@ namespace db::multimedia_files::query
         explicit GetCount();
         [[nodiscard]] auto debugInfo() const -> std::string override;
     };
+
     class GetCountForArtist : public Query
     {
       public:
@@ -26,6 +26,7 @@ namespace db::multimedia_files::query
 
         const Artist artist;
     };
+
     class GetCountForAlbum : public Query
     {
       public:
@@ -58,5 +59,4 @@ namespace db::multimedia_files::query
         explicit GetCountAlbums();
         [[nodiscard]] auto debugInfo() const -> std::string override;
     };
-
 }; // namespace db::multimedia_files::query
