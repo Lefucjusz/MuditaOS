@@ -14,10 +14,10 @@ namespace sys::cpu
     AlgorithmResult FrequencyHold::calculateImplementation(const AlgorithmData &data)
     {
         const auto retval = std::max(toHold, profile.minimalFrequency);
-        if (toHold > data.curentFrequency) {
+        if (toHold > data.currentFrequency) {
             return {algorithm::Change::UpScaled, retval};
         }
-        else if (toHold < data.curentFrequency) {
+        else if (toHold < data.currentFrequency) {
             return {algorithm::Change::Downscaled, retval};
         }
         return {algorithm::Change::Hold, retval};

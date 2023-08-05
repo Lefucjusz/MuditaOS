@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2021, Mudita Sp. z.o.o. All rights reserved.
+// Copyright (c) 2017-2023, Mudita Sp. z.o.o. All rights reserved.
 // For licensing, see https://github.com/mudita/MuditaOS/LICENSE.md
 
 #pragma once
@@ -12,10 +12,31 @@
 namespace db::multimedia_files
 {
     using Artist = std::string;
+
+    struct ArtistWithMetadata
+    {
+        Artist artist{};
+        std::uint32_t songsCount;
+        std::uint32_t totalLength; /// in seconds
+    };
+
     struct Album
     {
         Artist artist{};
         std::string title{};
+
+        inline bool operator==(const Album &rhs)
+        {
+            return ((this->artist == rhs.artist) && (this->title == rhs.title));
+        }
+    };
+
+    struct AlbumWithMetadata
+    {
+        Artist artist{};
+        std::string title{};
+        std::uint32_t songsCount;
+        std::uint32_t totalLength; /// in seconds
     };
 
     struct Tags
@@ -78,36 +99,42 @@ namespace db::multimedia_files
 
         auto create() -> bool override;
         auto add(TableRow entry) -> bool override;
-        auto removeById(uint32_t id) -> bool override;
+        auto removeById(std::uint32_t id) -> bool override;
         auto removeByField(TableFields field, const char *str) -> bool override;
         bool removeAll() override final;
         auto update(TableRow entry) -> bool override;
-        auto getById(uint32_t id) -> TableRow override;
-        auto getLimitOffset(uint32_t offset, uint32_t limit) -> std::vector<TableRow> override;
-        auto getLimitOffsetByField(uint32_t offset, uint32_t limit, TableFields field, const char *str)
+        auto getById(std::uint32_t id) -> TableRow override;
+        auto getLimitOffset(std::uint32_t offset, std::uint32_t limit) -> std::vector<TableRow> override;
+        auto getLimitOffsetByField(std::uint32_t offset, std::uint32_t limit, TableFields field, const char *str)
             -> std::vector<TableRow> override;
-        auto count() -> uint32_t override;
-        auto countByFieldId(const char *field, uint32_t id) -> uint32_t override;
+        auto count() -> std::uint32_t override;
+        auto countByFieldId(const char *field, std::uint32_t id) -> std::uint32_t override;
 
-        auto getArtistsLimitOffset(uint32_t offset, uint32_t limit) -> std::vector<Artist>;
-        auto countArtists() -> uint32_t;
+        auto getArtistsLimitOffset(std::uint32_t offset, std::uint32_t limit) -> std::vector<Artist>;
+        auto getArtistsWithMetadataLimitOffset(std::uint32_t offset, std::uint32_t limit)
+            -> std::vector<ArtistWithMetadata>;
+        auto countArtists() -> std::uint32_t;
 
-        auto getAlbumsLimitOffset(uint32_t offset, uint32_t limit) -> std::vector<Album>;
-        auto countAlbums() -> uint32_t;
+        auto getAlbumsLimitOffset(std::uint32_t offset, std::uint32_t limit) -> std::vector<Album>;
+        auto getAlbumsWithMetadataLimitOffset(std::uint32_t offset, std::uint32_t limit)
+            -> std::vector<AlbumWithMetadata>;
+        auto countAlbums() -> std::uint32_t;
 
-        auto getLimitOffset(const Artist &artist, uint32_t offset, uint32_t limit) -> std::vector<TableRow>;
-        auto count(const Artist &artist) -> uint32_t;
+        auto getLimitOffset(const Artist &artist, std::uint32_t offset, std::uint32_t limit) -> std::vector<TableRow>;
+        auto count(const Artist &artist) -> std::uint32_t;
+        auto countTotalLength(const Artist &artist) -> std::uint32_t;
 
-        auto getLimitOffset(const Album &album, uint32_t offset, uint32_t limit) -> std::vector<TableRow>;
-        auto count(const Album &album) -> uint32_t;
+        auto getLimitOffset(const Album &album, std::uint32_t offset, std::uint32_t limit) -> std::vector<TableRow>;
+        auto count(const Album &album) -> std::uint32_t;
+        auto countTotalLength(const Album &album) -> std::uint32_t;
 
-        auto getLimitOffsetByPaths(const std::vector<std::string> &paths, uint32_t offset, uint32_t limit)
+        auto getLimitOffsetByPaths(const std::vector<std::string> &paths, std::uint32_t offset, std::uint32_t limit)
             -> std::vector<TableRow>;
-        auto count(const std::vector<std::string> &paths) -> uint32_t;
-        TableRow getByPath(std::string path);
+        auto count(const std::vector<std::string> &paths) -> std::uint32_t;
+        TableRow getByPath(const std::string &path);
 
         /// @note entry.ID is skipped
-        bool addOrUpdate(TableRow entry, std::string oldPath = "");
+        bool addOrUpdate(const TableRow &entry, const std::string &oldPath = "");
 
       private:
         auto getFieldName(TableFields field) -> std::string;

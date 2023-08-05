@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022, Mudita Sp. z.o.o. All rights reserved.
+// Copyright (c) 2017-2023, Mudita Sp. z.o.o. All rights reserved.
 // For licensing, see https://github.com/mudita/MuditaOS/LICENSE.md
 
 #pragma once
@@ -7,17 +7,13 @@
 #include <Audio/decoder/Decoder.hpp>
 #include <purefs/filesystem_paths.hpp>
 
-namespace gui
+namespace gui::name::window
 {
-    namespace name
-    {
-        namespace window
-        {
-            inline constexpr auto track_info_window = "Track Info";
-            inline constexpr auto all_songs_window  = "All Songs";
-        }; // namespace window
-    };     // namespace name
-};         // namespace gui
+    inline constexpr auto track_info = "Track Info";
+    inline constexpr auto albums     = "Albums";
+    inline constexpr auto artists    = "Artists";
+    inline constexpr auto songs_list = "Songs List";
+} // namespace gui::name::window
 
 namespace app
 {
@@ -50,9 +46,6 @@ namespace app
 
         void createUserInterface() final;
         void destroyUserInterface() final;
-
-        void handlePlayResponse(sys::Message *msg);
-        void handleStopResponse(sys::Message *msg);
 
       private:
         std::unique_ptr<music_player::internal::MusicPlayerPriv> priv;

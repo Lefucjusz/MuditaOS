@@ -68,5 +68,4 @@ namespace db::multimedia_files::query
     {
         return "GetCountForPath";
     }
-
 } // namespace db::multimedia_files::query

@@ -34,4 +34,4 @@ namespace bsp
             return "none";
         }
    }
-};
+}

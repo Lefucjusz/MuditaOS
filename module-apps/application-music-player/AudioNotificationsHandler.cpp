@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2021, Mudita Sp. z.o.o. All rights reserved.
+// Copyright (c) 2017-2023, Mudita Sp. z.o.o. All rights reserved.
 // For licensing, see https://github.com/mudita/MuditaOS/LICENSE.md
 
 #include "AudioNotificationsHandler.hpp"
@@ -20,7 +20,7 @@ namespace app::music_player
             return sys::msgNotHandled();
         }
 
-        presenter->handleAudioStopNotifiaction(notification->token);
+        presenter->handleAudioStopNotification(notification->token);
         return sys::msgHandled();
     }
 

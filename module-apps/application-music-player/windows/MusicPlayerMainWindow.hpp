@@ -23,14 +23,14 @@ namespace gui
     {
       public:
         /// number of vertical items in track's progress bar
-        static constexpr std::uint8_t progressBarSize = 27;
+        static constexpr auto progressBarSize = 27;
 
         /// current view mode (switching with up / down arrow)
         enum class ViewMode
         {
             START = 1, // start screen "press down arrow to choose..."
             TRACK,     // track info
-            LIBRARY    // Music library
+            LIBRARY    // music library
         };
 
         explicit MusicPlayerMainWindow(app::ApplicationCommon *app,
@@ -62,7 +62,7 @@ namespace gui
         void buildTrackProgressInterface(VBox *parent);
         void buildTrackInfoInterface(VBox *parent);
         void updateVisibleTrackData(RecordState state) noexcept;
-        void updateVisibleProgressData(void) noexcept;
+        void updateVisibleProgressData() noexcept;
 
         bool onInputTrackMode(const InputEvent &inputEvent);
 
@@ -71,6 +71,7 @@ namespace gui
 
         std::shared_ptr<app::music_player::SongsContract::Presenter> presenter;
         Label *titleText                         = nullptr;
+        Label *albumText                         = nullptr;
         Label *artistText                        = nullptr;
         Text *currentTimeText                    = nullptr;
         Text *totalTimeText                      = nullptr;
@@ -85,6 +86,7 @@ namespace gui
         std::uint32_t currentTotalTime        = 0;
         std::uint8_t currentProgressBarsBlack = 0;
         std::string currentTitle;
+        std::string currentAlbum;
         std::string currentArtist;
         std::string currentTimeString;
         std::string currentTotalTimeString;

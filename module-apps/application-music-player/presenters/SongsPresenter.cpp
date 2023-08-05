@@ -2,7 +2,6 @@
 // For licensing, see https://github.com/mudita/MuditaOS/LICENSE.md
 
 #include "SongsPresenter.hpp"
-
 #include <Timers/TimerFactory.hpp>
 #include <algorithm>
 
@@ -15,150 +14,109 @@ namespace
 namespace app::music_player
 {
     SongsPresenter::SongsPresenter(app::ApplicationCommon *app,
-                                   std::shared_ptr<app::music::SongsModelInterface> songsModelInterface,
+                                   std::shared_ptr<app::music::SongsModel> songsModel,
                                    std::unique_ptr<AbstractAudioOperations> &&audioOperations)
-        : songsModelInterface{std::move(songsModelInterface)}, audioOperations{std::move(audioOperations)}
+        : songsModel{std::move(songsModel)}, audioOperations{std::move(audioOperations)}
     {
         songProgressTimer = sys::TimerFactory::createPeriodicTimer(
             app, songProgressTimerName, songProgressTimerInterval, [this](sys::Timer &) { handleTrackProgressTick(); });
     }
 
-    std::shared_ptr<app::music::SongsModelInterface> SongsPresenter::getMusicPlayerModelInterface() const
+    std::shared_ptr<app::music::SongsModel> SongsPresenter::getModel() const
     {
-        return songsModelInterface;
+        return songsModel;
+    }
+
+    void SongsPresenter::setCurrentlyViewedAlbum(const db::multimedia_files::Album &album)
+    {
+        songsModel->setCurrentlyViewedAlbum(album);
+    }
+
+    void SongsPresenter::setCurrentlyViewedArtist(const db::multimedia_files::Artist &artist)
+    {
+        songsModel->setCurrentlyViewedArtist(artist);
+    }
+
+    void SongsPresenter::setAllSongsView()
+    {
+        songsModel->setAllSongsView();
     }
 
     void SongsPresenter::createData()
     {
-        songsModelInterface->createData([this](const std::string &fileName) { return requestAudioOperation(fileName); },
-                                        [this]() { stop(); },
-                                        [this](const UTF8 &text) { setViewNavBarTemporaryMode(text); },
-                                        [this]() { restoreViewNavBarFromTemporaryMode(); });
+        songsModel->createData([this](const std::string &fileName) { return requestAudioOperation(fileName); },
+                               [this]() { stop(); },
+                               [this](const UTF8 &text) { setViewNavBarTemporaryMode(text); },
+                               [this]() { restoreViewNavBarFromTemporaryMode(); });
         updateViewSongState();
     }
 
     bool SongsPresenter::play(const std::string &filePath)
     {
         waitingToPlay = true;
-        return audioOperations->play(filePath, [this, filePath](audio::RetCode retCode, audio::Token token) {
-            waitingToPlay = false;
-            if (retCode != audio::RetCode::Success || !token.IsValid()) {
-                LOG_ERROR("Playback audio operation failed, retcode = %s, token validity = %d",
-                          str(retCode).c_str(),
-                          token.IsValid());
-                refreshView();
-                const auto &nextSongToPlay = songsModelInterface->getNextFilePath(filePath);
-                if (nextSongToPlay.empty()) {
-                    return;
-                }
-                play(nextSongToPlay);
-                return;
-            }
-
-            const app::music::SongContext songContext{
-                app::music::SongState::Playing, token, filePath, app::music::SongContext::StartPos};
-            songsModelInterface->setCurrentSongContext(songContext);
-
-            if (changePlayingStateCallback != nullptr) {
-                changePlayingStateCallback(app::music::SongState::Playing);
-            }
-            updateViewSongState();
-            songsModelInterface->updateRepository(filePath);
-            resetTrackProgressRatio();
-            songProgressTimer.start();
-            updateViewProgressState();
-            refreshView();
-        });
+        const auto operationStatus =
+            audioOperations->play(filePath, [this, filePath](audio::RetCode retCode, const audio::Token &token) {
+                playCallback(retCode, token, filePath);
+            });
+        return operationStatus;
     }
 
     bool SongsPresenter::pause()
     {
-        const auto &currentFileToken = songsModelInterface->getCurrentFileToken();
-        if (currentFileToken.has_value()) {
-            return audioOperations->pause(currentFileToken.value(), [this](audio::RetCode retCode, audio::Token token) {
-                if (retCode != audio::RetCode::Success || !token.IsValid()) {
-                    LOG_ERROR("Pause audio operation failed, retcode = %s, token validity = %d",
-                              str(retCode).c_str(),
-                              token.IsValid());
-                    return;
-                }
-                if (token != songsModelInterface->getCurrentFileToken()) {
-                    LOG_ERROR("Pause audio operation failed, wrong token");
-                    return;
-                }
-                songsModelInterface->setCurrentSongState(app::music::SongState::NotPlaying);
-                if (changePlayingStateCallback != nullptr) {
-                    changePlayingStateCallback(app::music::SongState::NotPlaying);
-                }
-                updateViewSongState();
-                songProgressTimer.stop();
-                updateTrackProgressRatio();
-                updateViewProgressState();
-                refreshView();
-            });
+        const auto &currentFileToken = songsModel->getCurrentFileToken();
+        if (!currentFileToken.has_value()) {
+            return false;
         }
-        return false;
+
+        const auto operationStatus =
+            audioOperations->pause(currentFileToken.value(), [this](audio::RetCode retCode, const audio::Token &token) {
+                pauseCallback(retCode, token);
+            });
+        return operationStatus;
     }
 
     bool SongsPresenter::resume()
     {
-        const auto &currentFileToken = songsModelInterface->getCurrentFileToken();
-        if (currentFileToken.has_value()) {
-            return audioOperations->resume(
-                currentFileToken.value(), [this](audio::RetCode retCode, audio::Token token) {
-                    if (retCode != audio::RetCode::Success || !token.IsValid()) {
-                        LOG_ERROR("Resume audio operation failed, retcode = %s, token validity = %d",
-                                  str(retCode).c_str(),
-                                  token.IsValid());
-                        return;
-                    }
-                    if (token != songsModelInterface->getCurrentFileToken()) {
-                        LOG_ERROR("Resume audio operation failed, wrong token");
-                        return;
-                    }
-                    songsModelInterface->setCurrentSongState(app::music::SongState::Playing);
-                    if (changePlayingStateCallback != nullptr) {
-                        changePlayingStateCallback(app::music::SongState::Playing);
-                    }
-                    updateViewSongState();
-                    songProgressTimestamp = std::chrono::system_clock::now();
-                    songProgressTimer.start();
-                    refreshView();
-                });
+        const auto &currentFileToken = songsModel->getCurrentFileToken();
+        if (!currentFileToken.has_value()) {
+            return false;
         }
-        return false;
+
+        const auto operationStatus = audioOperations->resume(
+            currentFileToken.value(),
+            [this](audio::RetCode retCode, const audio::Token &token) { resumeCallback(retCode, token); });
+        return operationStatus;
     }
 
     bool SongsPresenter::stop()
     {
-        const auto &currentFileToken = songsModelInterface->getCurrentFileToken();
-        if (currentFileToken.has_value()) {
-            return audioOperations->stop(currentFileToken.value(), [this](audio::RetCode, audio::Token) {
-                // The answer will come via multicast and will be handled in the application
-                updateViewSongState();
-                songProgressTimer.stop();
-                resetTrackProgressRatio();
-                updateViewProgressState();
-                refreshView();
-            });
+        const auto &currentFileToken = songsModel->getCurrentFileToken();
+        if (!currentFileToken.has_value()) {
+            return false;
         }
-        return false;
+
+        const auto operationStatus =
+            audioOperations->stop(currentFileToken.value(), [this](audio::RetCode retCode, const audio::Token &token) {
+                stopCallback(retCode, token);
+            });
+        return operationStatus;
     }
 
     bool SongsPresenter::playNext()
     {
-        const auto &currentSongContext = songsModelInterface->getCurrentSongContext();
-        const auto &nextSongToPlay     = songsModelInterface->getNextFilePath(currentSongContext.filePath);
+        const auto &currentSongContext = songsModel->getCurrentSongContext();
+        const auto &nextSongToPlay     = songsModel->getNextFilePath(currentSongContext.filePath);
         if (nextSongToPlay.empty()) {
             return false;
         }
+
         return play(nextSongToPlay);
     }
 
     bool SongsPresenter::playPrevious()
     {
-        const auto &currentSongContext = songsModelInterface->getCurrentSongContext();
-        const auto &prevSongToPlay     = songsModelInterface->getPreviousFilePath(currentSongContext.filePath);
+        const auto &currentSongContext = songsModel->getCurrentSongContext();
+        const auto &prevSongToPlay     = songsModel->getPreviousFilePath(currentSongContext.filePath);
         if (prevSongToPlay.empty()) {
             return false;
         }
@@ -181,99 +139,106 @@ namespace app::music_player
         changePlayingStateCallback = std::move(cb);
     }
 
-    bool SongsPresenter::handleAudioStopNotifiaction(audio::Token token)
+    bool SongsPresenter::handleAudioStopNotification(audio::Token token)
     {
-        if (token == songsModelInterface->getCurrentFileToken()) {
-            songsModelInterface->clearCurrentSongContext();
-            if (changePlayingStateCallback != nullptr) {
-                changePlayingStateCallback(app::music::SongState::NotPlaying);
-            }
-            if (!waitingToPlay) {
-                updateViewSongState();
-                refreshView();
-            }
-            return true;
+        if (token != songsModel->getCurrentFileToken()) {
+            return false;
         }
-        return false;
+
+        songsModel->clearCurrentSongContext();
+        if (changePlayingStateCallback != nullptr) {
+            changePlayingStateCallback(app::music::SongState::NotPlaying);
+        }
+        if (!waitingToPlay) {
+            updateViewSongState();
+            refreshView();
+        }
+        return true;
     }
 
     bool SongsPresenter::handleAudioEofNotification(audio::Token token)
     {
-        const auto &currentSongContext = songsModelInterface->getCurrentSongContext();
-
-        if (token == currentSongContext.currentFileToken) {
-            songsModelInterface->clearCurrentSongContext();
-            if (changePlayingStateCallback != nullptr) {
-                changePlayingStateCallback(app::music::SongState::NotPlaying);
-            }
-            auto nextSongToPlay = songsModelInterface->getNextFilePath(currentSongContext.filePath);
-            if (!nextSongToPlay.empty()) {
-                requestAudioOperation(nextSongToPlay);
-            }
-            else {
-                updateViewSongState();
-                refreshView();
-            }
-            return true;
+        const auto &currentSongContext = songsModel->getCurrentSongContext();
+        if (token != currentSongContext.currentFileToken) {
+            return false;
         }
-        return false;
+
+        songsModel->clearCurrentSongContext();
+        if (changePlayingStateCallback != nullptr) {
+            changePlayingStateCallback(app::music::SongState::NotPlaying);
+        }
+        const auto &nextSongToPlay = songsModel->getNextFilePath(currentSongContext.filePath);
+        if (!nextSongToPlay.empty()) {
+            requestAudioOperation(nextSongToPlay);
+        }
+        else {
+            updateViewSongState();
+            refreshView();
+        }
+        return true;
     }
 
     bool SongsPresenter::handleAudioPausedNotification(audio::Token token)
     {
-        if (token == songsModelInterface->getCurrentFileToken()) {
-            songsModelInterface->setCurrentSongState(app::music::SongState::NotPlaying);
-            if (changePlayingStateCallback != nullptr) {
-                changePlayingStateCallback(app::music::SongState::NotPlaying);
-            }
-            updateViewSongState();
-            songProgressTimer.stop();
-            updateTrackProgressRatio();
-            updateViewProgressState();
-            refreshView();
-            return true;
+        if (token != songsModel->getCurrentFileToken()) {
+            return false;
         }
-        return false;
+
+        songsModel->setCurrentSongState(app::music::SongState::NotPlaying);
+        if (changePlayingStateCallback != nullptr) {
+            changePlayingStateCallback(app::music::SongState::NotPlaying);
+        }
+        updateViewSongState();
+        songProgressTimer.stop();
+        updateTrackProgressRatio();
+        updateViewProgressState();
+        refreshView();
+        return true;
     }
 
     bool SongsPresenter::handleAudioResumedNotification(audio::Token token)
     {
-        if (token == songsModelInterface->getCurrentFileToken()) {
-            songsModelInterface->setCurrentSongState(app::music::SongState::Playing);
-            if (changePlayingStateCallback != nullptr) {
-                changePlayingStateCallback(app::music::SongState::Playing);
-            }
-            updateViewSongState();
-            songProgressTimestamp = std::chrono::system_clock::now();
-            songProgressTimer.start();
-            refreshView();
-            return true;
+        if (token != songsModel->getCurrentFileToken()) {
+            return false;
         }
-        return false;
+
+        songsModel->setCurrentSongState(app::music::SongState::Playing);
+        if (changePlayingStateCallback != nullptr) {
+            changePlayingStateCallback(app::music::SongState::Playing);
+        }
+        updateViewSongState();
+        songProgressTimestamp = std::chrono::system_clock::now();
+        songProgressTimer.start();
+        refreshView();
+        return true;
     }
 
     bool SongsPresenter::handlePlayOrPauseRequest()
     {
-        const auto &currentSongContext = songsModelInterface->getCurrentSongContext();
+        const auto &currentSongContext = songsModel->getCurrentSongContext();
+
         if (currentSongContext.isPaused()) {
             return resume();
         }
-        else if (currentSongContext.isPlaying()) {
+
+        if (currentSongContext.isPlaying()) {
             return pause();
         }
+
         return false;
     }
 
     void SongsPresenter::updateTrackProgressRatio()
     {
+        using namespace std::chrono;
+
         std::uint32_t secondsTotal = 0;
-        if (songsModelInterface->getActivatedRecord().has_value()) {
-            secondsTotal = songsModelInterface->getActivatedRecord()->audioProperties.songLength;
+        if (songsModel->getActivatedRecord().has_value()) {
+            secondsTotal = songsModel->getActivatedRecord()->audioProperties.songLength;
         }
 
-        const auto now = std::chrono::system_clock::now();
-        const auto millisecondsToAdd =
-            std::chrono::duration_cast<std::chrono::milliseconds>(now - songProgressTimestamp);
+        const auto now               = std::chrono::system_clock::now();
+        const auto millisecondsToAdd = duration_cast<std::chrono::milliseconds>(now - songProgressTimestamp);
         songMillisecondsElapsed += millisecondsToAdd;
         songProgressTimestamp = now;
 
@@ -282,7 +247,7 @@ namespace app::music_player
         }
         else {
             currentProgressRatio =
-                static_cast<float>(std::chrono::duration_cast<std::chrono::seconds>(songMillisecondsElapsed).count()) /
+                static_cast<float>(duration_cast<std::chrono::seconds>(songMillisecondsElapsed).count()) /
                 static_cast<float>(secondsTotal);
         }
         currentProgressRatio = std::clamp(currentProgressRatio, 0.0f, 1.0f);
@@ -305,7 +270,8 @@ namespace app::music_player
 
     bool SongsPresenter::requestAudioOperation(const std::string &filePath)
     {
-        auto currentSongContext = songsModelInterface->getCurrentSongContext();
+        songsModel->initRepository();
+        const auto &currentSongContext = songsModel->getCurrentSongContext();
         if (currentSongContext.isValid() && (filePath.empty() || currentSongContext.filePath == filePath)) {
             return currentSongContext.isPlaying() ? pause() : resume();
         }
@@ -329,8 +295,8 @@ namespace app::music_player
     void SongsPresenter::updateViewSongState()
     {
         if (auto view = getView(); view != nullptr) {
-            auto currentSongContext = songsModelInterface->getCurrentSongContext();
-            auto currentRecord      = songsModelInterface->getActivatedRecord();
+            const auto &currentSongContext = songsModel->getCurrentSongContext();
+            const auto &currentRecord      = songsModel->getActivatedRecord();
             view->updateSongsState(currentRecord,
                                    currentSongContext.isPlaying()
                                        ? SongsContract::View::RecordState::Playing
@@ -351,5 +317,95 @@ namespace app::music_player
         if (auto view = getView(); view != nullptr) {
             view->refreshWindow();
         }
+    }
+
+    void SongsPresenter::playCallback(audio::RetCode retCode, const audio::Token &token, const std::string &filePath)
+    {
+        waitingToPlay = false;
+        if (retCode != audio::RetCode::Success || !token.IsValid()) {
+            LOG_ERROR("Playback audio operation failed, retcode = %s, token validity = %d",
+                      str(retCode).c_str(),
+                      token.IsValid());
+            refreshView();
+
+            const auto &nextSongToPlay = songsModel->getNextFilePath(filePath);
+            if (nextSongToPlay.empty()) {
+                return;
+            }
+
+            play(nextSongToPlay);
+            return;
+        }
+
+        songsModel->setCurrentSongContext(
+            {app::music::SongState::Playing, token, filePath, app::music::SongContext::StartPos});
+        if (changePlayingStateCallback != nullptr) {
+            changePlayingStateCallback(app::music::SongState::Playing);
+        }
+        updateViewSongState();
+        songsModel->updateRepository(filePath);
+        resetTrackProgressRatio();
+        songProgressTimer.start();
+        updateViewProgressState();
+        refreshView();
+    }
+
+    void SongsPresenter::pauseCallback(audio::RetCode retCode, const audio::Token &token)
+    {
+        if (retCode != audio::RetCode::Success || !token.IsValid()) {
+            LOG_ERROR("Pause audio operation failed, retcode = %s, token validity = %d",
+                      str(retCode).c_str(),
+                      token.IsValid());
+            return;
+        }
+
+        if (token != songsModel->getCurrentFileToken()) {
+            LOG_ERROR("Pause audio operation failed, wrong token");
+            return;
+        }
+
+        songsModel->setCurrentSongState(app::music::SongState::NotPlaying);
+        if (changePlayingStateCallback != nullptr) {
+            changePlayingStateCallback(app::music::SongState::NotPlaying);
+        }
+        updateViewSongState();
+        songProgressTimer.stop();
+        updateTrackProgressRatio();
+        updateViewProgressState();
+        refreshView();
+    }
+
+    void SongsPresenter::resumeCallback(audio::RetCode retCode, const audio::Token &token)
+    {
+        if (retCode != audio::RetCode::Success || !token.IsValid()) {
+            LOG_ERROR("Resume audio operation failed, retcode = %s, token validity = %d",
+                      str(retCode).c_str(),
+                      token.IsValid());
+            return;
+        }
+
+        if (token != songsModel->getCurrentFileToken()) {
+            LOG_ERROR("Resume audio operation failed, wrong token");
+            return;
+        }
+
+        songsModel->setCurrentSongState(app::music::SongState::Playing);
+        if (changePlayingStateCallback != nullptr) {
+            changePlayingStateCallback(app::music::SongState::Playing);
+        }
+        updateViewSongState();
+        songProgressTimestamp = std::chrono::system_clock::now();
+        songProgressTimer.start();
+        refreshView();
+    }
+
+    void SongsPresenter::stopCallback([[maybe_unused]] audio::RetCode retCode,
+                                      [[maybe_unused]] const audio::Token &token)
+    {
+        updateViewSongState();
+        songProgressTimer.stop();
+        resetTrackProgressRatio();
+        updateViewProgressState();
+        refreshView();
     }
 } // namespace app::music_player

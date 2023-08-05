@@ -47,7 +47,7 @@ namespace gui
 {
     MusicPlayerMainWindow::MusicPlayerMainWindow(
         app::ApplicationCommon *app, std::shared_ptr<app::music_player::SongsContract::Presenter> windowPresenter)
-        : OptionWindow(app, name::window::track_info_window), presenter{std::move(windowPresenter)}
+        : OptionWindow(app, name::window::track_info), presenter{std::move(windowPresenter)}
     {
         presenter->attach(this);
         buildInterface();
@@ -127,9 +127,16 @@ namespace gui
         titleText->setMargins(Margins(0, trackInfoScreen::topMargin, 0, 0));
         titleText->setEdges(RectangleEdge::None);
 
+        albumText = new Label(mainBox, 0, 0, trackInfoScreen::titleWidth, trackInfoScreen::albumHeight);
+        albumText->setAlignment(Alignment(Alignment::Horizontal::Center, Alignment::Vertical::Center));
+        albumText->setFont(style::window::font::medium);
+        albumText->setText(currentAlbum);
+        albumText->setMargins(Margins(0, trackInfoScreen::internalMargin, 0, 0));
+        albumText->setEdges(RectangleEdge::None);
+
         artistText = new Label(mainBox, 0, 0, trackInfoScreen::titleWidth, trackInfoScreen::artistHeight);
         artistText->setAlignment(Alignment(Alignment::Horizontal::Center, Alignment::Vertical::Center));
-        artistText->setFont(style::window::font::medium);
+        artistText->setFont(style::window::font::small);
         artistText->setText(currentArtist);
         artistText->setMargins(Margins(0, trackInfoScreen::internalMargin, 0, 0));
         artistText->setEdges(RectangleEdge::None);
@@ -177,7 +184,6 @@ namespace gui
                         if (window.empty()) {
                             return true;
                         }
-                        LOG_DEBUG("Switching to window %s", window.c_str());
                         application->switchWindow(window, nullptr);
                         return true;
                     },
@@ -198,10 +204,9 @@ namespace gui
                     window.empty() ? option::SettingRightItem::Disabled : option::SettingRightItem::ArrowWhite));
             };
 
-        addOption(utils::translate("app_music_player_all_songs"), name::window::all_songs_window, true);
-        addOption(utils::translate("app_music_player_artists"));
-        addOption(utils::translate("app_music_player_albums"));
-        addOption(utils::translate("app_music_player_playlists"));
+        addOption(utils::translate("app_music_player_all_songs"), name::window::songs_list, true);
+        addOption(utils::translate("app_music_player_artists"), name::window::artists, false);
+        addOption(utils::translate("app_music_player_albums"), name::window::albums, false);
 
         optionsList                         = new ListView(mainBox,
                                    0,
@@ -376,6 +381,7 @@ namespace gui
         erase();
 
         titleText       = nullptr;
+        albumText       = nullptr;
         artistText      = nullptr;
         currentTimeText = nullptr;
         totalTimeText   = nullptr;
@@ -386,29 +392,46 @@ namespace gui
 
         stateImageBox   = nullptr;
         descriptionText = nullptr;
-        std::memset(progressBarItems, 0, progressBarSize * sizeof(Image *));
+        std::memset(progressBarItems, 0, sizeof(progressBarItems));
 
         optionsList = nullptr;
     }
 
-    void MusicPlayerMainWindow::onBeforeShow([[maybe_unused]] ShowMode mode, [[maybe_unused]] SwitchData *data)
+    void MusicPlayerMainWindow::onBeforeShow(ShowMode mode, [[maybe_unused]] SwitchData *data)
     {
         presenter->attach(this);
-        rebuild();
+        switch (mode) {
+        case ShowMode::GUI_SHOW_INIT:
+            rebuild();
+            break;
+
+        /* Retain current list item focus */
+        case ShowMode::GUI_SHOW_RETURN:
+            presenter->songsStateRequest();
+            if (optionsList != nullptr) {
+                optionsList->rebuildList(listview::RebuildType::InPlace);
+            }
+            break;
+        }
     }
 
     void MusicPlayerMainWindow::updateSongsState(std::optional<db::multimedia_files::MultimediaFilesRecord> record,
                                                  RecordState state)
     {
-        if (record) {
+        if (record.has_value()) {
             currentTitle = record->tags.title;
             if (currentTitle.empty()) {
-                currentTitle = utils::translate("app_music_player_uknown_title");
+                currentTitle = utils::translate("app_music_player_unknown_title");
+            }
+
+            currentAlbum = record->tags.album.title;
+            if (currentAlbum.empty()) {
+                currentAlbum = utils::translate("app_music_player_unknown_album");
             }
 
             currentArtist = record->tags.album.artist;
             if (currentArtist.empty()) {
-                currentArtist = utils::translate("app_music_player_uknown_artist");
+                currentArtist = utils::translate("app_music_player_unknown_artist");
             }
 
             currentTotalTime = record->audioProperties.songLength;
@@ -439,12 +462,13 @@ namespace gui
 
     void MusicPlayerMainWindow::refreshWindow()
     {
-        RefreshModes mode = RefreshModes::GUI_REFRESH_FAST;
         if (needToDeepRedrawScreen) {
+            application->refreshWindow(RefreshModes::GUI_REFRESH_DEEP);
             needToDeepRedrawScreen = false;
-            mode                   = RefreshModes::GUI_REFRESH_DEEP;
+            return;
         }
-        application->refreshWindow(mode);
+
+        application->refreshWindow(RefreshModes::GUI_REFRESH_FAST);
     }
 
     void MusicPlayerMainWindow::setNavBarTemporaryMode(const std::string &text)
@@ -478,6 +502,11 @@ namespace gui
         if (titleText != nullptr) {
             titleText->setText(currentTitle);
         }
+
+        if (albumText != nullptr) {
+            albumText->setText(currentAlbum);
+        }
+
         if (artistText != nullptr) {
             artistText->setText(currentArtist);
         }
@@ -485,14 +514,17 @@ namespace gui
         if (totalTimeText != nullptr) {
             totalTimeText->setRichText(currentTotalTimeString);
         }
+
         if (rewImageBox != nullptr) {
             rewImageBox->setImage((isPlaying || isPaused) ? "mp_prev" : "mp_prev_gray",
                                   musicPlayerStyle::common::imageType);
         }
+
         if (pauseImageBox != nullptr) {
             pauseImageBox->setImage(isPlaying ? "mp_pause" : ((isPaused) ? "mp_play" : "mp_pause_gray"),
                                     musicPlayerStyle::common::imageType);
         }
+
         if (ffImageBox != nullptr) {
             ffImageBox->setImage((isPlaying || isPaused) ? "mp_next" : "mp_next_gray",
                                  musicPlayerStyle::common::imageType);
@@ -504,6 +536,7 @@ namespace gui
                                         : (isPaused ? "mp_now_playing_icon_pause" : "mp_now_playing_icon_pause_gray"),
                                     musicPlayerStyle::common::imageType);
         }
+
         if (descriptionText != nullptr) {
             std::string trackDescription;
             if (!isPaused && !isPlaying) {
@@ -555,6 +588,7 @@ namespace gui
         if (totalTimeText != nullptr) {
             totalTimeText->setRichText(currentTotalTimeString);
         }
+
         if (currentTimeText != nullptr) {
             currentTimeText->setRichText(currentTimeString);
         }
@@ -573,7 +607,7 @@ namespace gui
         }
 
         if (inputEvent.is(KeyCode::KEY_UP) && myViewMode == ViewMode::LIBRARY && isPermissionToChangeViewMode) {
-            if (presenter->getMusicPlayerModelInterface()->getCurrentSongContext().filePath.empty()) {
+            if (presenter->getModel()->getCurrentSongContext().filePath.empty()) {
                 changeCurrentMode(ViewMode::START);
             }
             else {
@@ -595,11 +629,13 @@ namespace gui
             presenter->playPrevious();
             return true;
         }
-        else if (inputEvent.isShortRelease(KeyCode::KEY_RIGHT)) {
+
+        if (inputEvent.isShortRelease(KeyCode::KEY_RIGHT)) {
             presenter->playNext();
             return true;
         }
-        else if (inputEvent.isShortRelease(KeyCode::KEY_ENTER)) {
+
+        if (inputEvent.isShortRelease(KeyCode::KEY_ENTER)) {
             presenter->handlePlayOrPauseRequest();
         }
 

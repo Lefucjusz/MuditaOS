@@ -1,64 +1,81 @@
-﻿// Copyright (c) 2017-2021, Mudita Sp. z.o.o. All rights reserved.
+﻿// Copyright (c) 2017-2023, Mudita Sp. z.o.o. All rights reserved.
 // For licensing, see https://github.com/mudita/MuditaOS/LICENSE.md
 
 #pragma once
 
 #include "module-apps/application-music-player/data/MusicPlayerStyle.hpp"
-
-#include <apps-common/models/SongsRepository.hpp>
-#include <apps-common/models/SongsModelInterface.hpp>
-
 #include <apps-common/models/SongContext.hpp>
 #include <Audio/decoder/Decoder.hpp>
+#include <apps-common/ApplicationCommon.hpp>
+#include <apps-common/DatabaseModel.hpp>
+#include <module-db/Interface/MultimediaFilesRecord.hpp>
+#include "SongsRepository.hpp"
 
 namespace app::music
 {
-    class SongsModel : public SongsModelInterface
+    class SongsModel : public app::DatabaseModel<db::multimedia_files::MultimediaFilesRecord>,
+                       public gui::ListItemProvider
     {
       public:
-        SongsModel(app::ApplicationCommon *app, std::shared_ptr<AbstractSongsRepository> songsRepository);
+        using OnShortReleaseCallback           = std::function<bool(const std::string &fileName)>;
+        using OnLongPressCallback              = std::function<void()>;
+        using OnSetNavBarTemporaryCallback     = std::function<void(const UTF8 &)>;
+        using OnRestoreNavBarTemporaryCallback = std::function<void()>;
 
-        void createData(OnShortReleaseCallback shortReleaseCallback,
-                        OnLongPressCallback longPressCallback,
-                        OnSetNavBarTemporaryCallback navBarTemporaryMode,
-                        OnRestoreNavBarTemporaryCallback navBarRestoreFromTemporaryMode) override;
+        SongsModel(app::ApplicationCommon *app, std::shared_ptr<SongsRepository> songsRepository);
 
-        [[nodiscard]] auto requestRecordsCount() -> unsigned int override;
+        void createData(const OnShortReleaseCallback &shortReleaseCb,
+                        const OnLongPressCallback &longPressCb,
+                        const OnSetNavBarTemporaryCallback &navBarTemporaryModeCb,
+                        const OnRestoreNavBarTemporaryCallback &navBarRestoreFromTemporaryModeCb);
 
-        [[nodiscard]] auto getMinimalItemSpaceRequired() const -> unsigned int override;
-
+        [[nodiscard]] auto requestRecordsCount() -> unsigned override;
+        [[nodiscard]] auto getMinimalItemSpaceRequired() const -> unsigned override;
         auto getItem(gui::Order order) -> gui::ListItem * override;
+        auto requestRecords(std::uint32_t offset, std::uint32_t limit) -> void override;
 
-        void requestRecords(uint32_t offset, uint32_t limit) override;
+        auto setCurrentlyViewedAlbum(const db::multimedia_files::Album &album) -> void;
+        auto setCurrentlyViewedArtist(const db::multimedia_files::Artist &artist) -> void;
+        auto setAllSongsView() -> void;
 
-        std::string getNextFilePath(const std::string &filePath) const override;
-        std::string getPreviousFilePath(const std::string &filePath) const override;
-        void updateRepository(const std::string &filePath) override;
+        auto initRepository() -> void;
+        auto updateRepository(const std::string &filePath) -> void;
 
-        bool isSongPlaying() const noexcept override;
-        void setCurrentSongState(SongState songState) noexcept override;
-        std::optional<audio::Token> getCurrentFileToken() const noexcept override;
-        std::optional<db::multimedia_files::MultimediaFilesRecord> getActivatedRecord() const noexcept override;
+        auto getNextFilePath(const std::string &filePath) const -> std::string;
+        auto getPreviousFilePath(const std::string &filePath) const -> std::string;
 
-        SongContext getCurrentSongContext() const noexcept override;
-        void setCurrentSongContext(SongContext context) override;
-        void clearCurrentSongContext() override;
+        auto isSongPlaying() const noexcept -> bool;
+        auto setCurrentSongState(SongState songState) noexcept -> void;
+        auto getCurrentFileToken() const noexcept -> std::optional<audio::Token>;
+        auto getActivatedRecord() const noexcept -> std::optional<db::multimedia_files::MultimediaFilesRecord>;
 
-        void clearData() override;
+        auto getCurrentSongContext() const noexcept -> SongContext;
+        auto setCurrentSongContext(const SongContext &context) -> void;
+        auto clearCurrentSongContext() -> void;
+
+        auto clearData() -> void;
 
       private:
-        bool onMusicListRetrieved(const std::vector<db::multimedia_files::MultimediaFilesRecord> &records,
-                                  unsigned int repoRecordsCount);
-        [[nodiscard]] bool updateRecords(std::vector<db::multimedia_files::MultimediaFilesRecord> records) override;
+        auto onMusicListRetrieved(const std::vector<db::multimedia_files::MultimediaFilesRecord> &records,
+                                  unsigned repoRecordsCount) -> bool;
+        [[nodiscard]] auto updateRecords(std::vector<db::multimedia_files::MultimediaFilesRecord> records)
+            -> bool override;
+
+        auto checkIfViewedMatchPlayed() -> bool;
 
         SongContext songContext;
-        std::optional<db::multimedia_files::MultimediaFilesRecord> activatedRecord = std::nullopt;
+        std::optional<db::multimedia_files::MultimediaFilesRecord> activatedRecord;
 
-        OnShortReleaseCallback shortReleaseCallback{nullptr};
-        OnLongPressCallback longPressCallback{nullptr};
-        OnSetNavBarTemporaryCallback navBarTemporaryMode{nullptr};
-        OnRestoreNavBarTemporaryCallback navBarRestoreFromTemporaryMode{nullptr};
+        std::optional<db::multimedia_files::Album> currentlyViewedAlbum;
+        std::optional<db::multimedia_files::Artist> currentlyViewedArtist;
 
-        std::shared_ptr<AbstractSongsRepository> songsRepository;
+        std::shared_ptr<SongsRepository> songsRepository;
+
+        OnShortReleaseCallback shortReleaseCallback                     = nullptr;
+        OnLongPressCallback longPressCallback                           = nullptr;
+        OnSetNavBarTemporaryCallback navBarTemporaryMode                = nullptr;
+        OnRestoreNavBarTemporaryCallback navBarRestoreFromTemporaryMode = nullptr;
+
+        std::uint32_t currentListOffset = 0;
     };
 } // namespace app::music

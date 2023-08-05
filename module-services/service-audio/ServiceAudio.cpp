@@ -155,7 +155,6 @@ sys::ReturnCodes ServiceAudio::InitHandler()
 
 sys::ReturnCodes ServiceAudio::DeinitHandler()
 {
-
     settingsProvider->deinit();
     LOG_INFO("Deinitialized");
     return sys::ReturnCodes::Success;

@@ -8,7 +8,7 @@ namespace sys::cpu
     AlgorithmResult ImmediateUpscale::calculateImplementation(const AlgorithmData &data)
     {
         const auto now = data.sentinel.minFrequency;
-        const auto was = data.curentFrequency;
+        const auto was = data.currentFrequency;
         if (now > was) {
             return {algorithm::Change::UpScaled, now};
         }

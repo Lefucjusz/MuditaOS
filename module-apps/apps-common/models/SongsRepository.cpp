@@ -4,13 +4,8 @@
 #include "SongsRepository.hpp"
 
 #include <algorithm>
-#include <log/log.hpp>
-#include <service-audio/AudioServiceAPI.hpp>
-#include <service-audio/AudioServiceName.hpp>
 #include <time/ScopedTime.hpp>
-#include <service-audio/AudioMessage.hpp>
 #include <module-db/queries/multimedia_files/QueryMultimediaFilesGetLimited.hpp>
-#include <module-db/queries/multimedia_files/QueryMultimediaFilesGet.hpp>
 
 #include <filesystem>
 
@@ -22,7 +17,8 @@ namespace constants
 
 namespace app::music
 {
-    ServiceAudioTagsFetcher::ServiceAudioTagsFetcher(ApplicationCommon *application) : application(application)
+    ServiceAudioTagsFetcher::ServiceAudioTagsFetcher(ApplicationCommon *application)
+        : application(application) // TODO is it needed?
     {}
 
     std::optional<tags::fetcher::Tags> ServiceAudioTagsFetcher::getFileTags(const std::string &filePath) const
@@ -56,16 +52,16 @@ namespace app::music
         task->execute(application, this);
     }
 
-    void SongsRepository::getMusicFilesList(const std::uint32_t offset,
-                                            const std::uint32_t limit,
+    void SongsRepository::getMusicFilesList(std::uint32_t offset,
+                                            std::uint32_t limit,
                                             const OnGetMusicFilesListCallback &callback)
     {
         musicFilesViewCache.records.clear();
         getMusicFilesList(pathPrefixes, offset, limit, callback);
     }
 
-    void SongsRepository::getMusicFilesListByPaths(const std::uint32_t offset,
-                                                   const std::uint32_t limit,
+    void SongsRepository::getMusicFilesListByPaths(std::uint32_t offset,
+                                                   std::uint32_t limit,
                                                    const OnGetMusicFilesListCallback &callback)
     {
 
@@ -261,12 +257,12 @@ namespace app::music
     }
 
     void SongsRepository::getMusicFilesList(const std::vector<std::string> &paths,
-                                            const std::uint32_t offset,
-                                            const std::uint32_t limit,
+                                            std::uint32_t offset,
+                                            std::uint32_t limit,
                                             const OnGetMusicFilesListCallback &callback)
     {
 
-        auto taskCallback = [this, callback, offset](auto response) {
+        const auto taskCallback = [this, callback, offset](auto response) {
             auto result = dynamic_cast<db::multimedia_files::query::GetLimitedResult *>(response);
             if (result == nullptr) {
                 return false;
@@ -285,6 +281,29 @@ namespace app::music
         auto query = std::make_unique<db::multimedia_files::query::GetLimitedByPaths>(
             std::vector<std::string>{paths}, offset, limit);
         auto task = app::AsyncQuery::createFromQuery(std::move(query), db::Interface::Name::MultimediaFiles);
+        task->setCallback(taskCallback);
+        task->execute(application, this);
+    }
+
+    void SongsRepository::getMusicAlbumsList(
+        std::uint32_t offset,
+        std::uint32_t limit,
+        const OnGetAlbumsListCallback &callback) // TODO why is above limited by paths?
+    {
+        const auto taskCallback = [callback](const auto response) {
+            const auto result = dynamic_cast<db::multimedia_files::query::GetAlbumsLimitedResult *>(response);
+            if (result == nullptr) {
+                return false;
+            }
+
+            if (callback != nullptr) {
+                callback(result->getResult(), result->getCount());
+            }
+            return true;
+        };
+
+        auto query = std::make_unique<db::multimedia_files::query::GetAlbumsLimited>(offset, limit);
+        auto task  = app::AsyncQuery::createFromQuery(std::move(query), db::Interface::Name::MultimediaFiles);
         task->setCallback(taskCallback);
         task->execute(application, this);
     }

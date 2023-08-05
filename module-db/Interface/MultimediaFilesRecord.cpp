@@ -57,11 +57,19 @@ namespace db::multimedia_files
         if (typeid(*query) == typeid(query::GetArtistsLimited)) {
             return runQueryImplGetArtistsLimited(std::static_pointer_cast<query::GetArtistsLimited>(query));
         }
+        if (typeid(*query) == typeid(query::GetArtistsWithMetadataLimited)) {
+            return runQueryImplGetArtistsWithMetadataLimited(
+                std::static_pointer_cast<query::GetArtistsWithMetadataLimited>(query));
+        }
         if (typeid(*query) == typeid(query::GetCountAlbums)) {
             return runQueryImplGetCountAlbums(std::static_pointer_cast<query::GetCountAlbums>(query));
         }
         if (typeid(*query) == typeid(query::GetAlbumsLimited)) {
             return runQueryImplGetAlbumsLimited(std::static_pointer_cast<query::GetAlbumsLimited>(query));
+        }
+        if (typeid(*query) == typeid(query::GetAlbumsWithMetadataLimited)) {
+            return runQueryImplGetAlbumsWithMetadataLimited(
+                std::static_pointer_cast<query::GetAlbumsWithMetadataLimited>(query));
         }
         if (typeid(*query) == typeid(query::GetLimitedForArtist)) {
             return runQueryImplGetLimited(std::static_pointer_cast<query::GetLimitedForArtist>(query));
@@ -203,6 +211,19 @@ namespace db::multimedia_files
         return response;
     }
 
+    std::unique_ptr<db::multimedia_files::query::GetArtistsWithMetadataLimitedResult> MultimediaFilesRecordInterface::
+        runQueryImplGetArtistsWithMetadataLimited(
+            const std::shared_ptr<db::multimedia_files::query::GetArtistsWithMetadataLimited> &query)
+    {
+        const auto records = database->files.getArtistsWithMetadataLimitOffset(query->offset, query->limit);
+
+        auto response =
+            std::make_unique<query::GetArtistsWithMetadataLimitedResult>(records, database->files.countArtists());
+        response->setRequestQuery(query);
+
+        return response;
+    }
+
     std::unique_ptr<db::multimedia_files::query::GetCountResult> MultimediaFilesRecordInterface::
         runQueryImplGetCountAlbums(const std::shared_ptr<db::multimedia_files::query::GetCountAlbums> &query)
     {
@@ -223,12 +244,25 @@ namespace db::multimedia_files
         return response;
     }
 
+    std::unique_ptr<db::multimedia_files::query::GetAlbumsWithMetadataLimitedResult> MultimediaFilesRecordInterface::
+        runQueryImplGetAlbumsWithMetadataLimited(
+            const std::shared_ptr<db::multimedia_files::query::GetAlbumsWithMetadataLimited> &query)
+    {
+        const auto records = database->files.getAlbumsWithMetadataLimitOffset(query->offset, query->limit);
+
+        auto response =
+            std::make_unique<query::GetAlbumsWithMetadataLimitedResult>(records, database->files.countAlbums());
+        response->setRequestQuery(query);
+
+        return response;
+    }
+
     std::unique_ptr<db::multimedia_files::query::GetLimitedResult> MultimediaFilesRecordInterface::
         runQueryImplGetLimited(const std::shared_ptr<db::multimedia_files::query::GetLimitedForArtist> &query)
     {
         const auto records = database->files.getLimitOffset(query->artist, query->offset, query->limit);
 
-        auto response = std::make_unique<query::GetLimitedResult>(records, database->files.count());
+        auto response = std::make_unique<query::GetLimitedResult>(records, database->files.count(query->artist));
         response->setRequestQuery(query);
 
         return response;
@@ -248,7 +282,7 @@ namespace db::multimedia_files
     {
         const auto records = database->files.getLimitOffset(query->album, query->offset, query->limit);
 
-        auto response = std::make_unique<query::GetLimitedResult>(records, database->files.count());
+        auto response = std::make_unique<query::GetLimitedResult>(records, database->files.count(query->album));
         response->setRequestQuery(query);
 
         return response;

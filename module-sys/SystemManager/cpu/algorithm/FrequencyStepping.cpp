@@ -31,7 +31,7 @@ namespace sys::cpu
     AlgorithmResult FrequencyStepping::calculateImplementation(const AlgorithmData &data)
     {
         const auto load           = data.CPUload;
-        const auto startFrequency = data.curentFrequency;
+        const auto startFrequency = data.currentFrequency;
         const auto minFrequency   = data.sentinel.minFrequency;
 
         if (load > powerProfile.frequencyShiftUpperThreshold && startFrequency < bsp::CpuFrequencyMHz::Level_6) {
