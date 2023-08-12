@@ -6,7 +6,6 @@
 
 namespace sys::cpu
 {
-
     FrequencyStepping::FrequencyStepping(const bsp::PowerProfile &powerProfile, CpuGovernor &cpuGovernor)
         : powerProfile(powerProfile), cpuGovernor(cpuGovernor)
     {}
@@ -23,9 +22,7 @@ namespace sys::cpu
         case bsp::CpuFrequencyMHz::Level_3:
             return bsp::CpuFrequencyMHz::Level_2;
         case bsp::CpuFrequencyMHz::Level_2:
-            [[fallthrough]];
         case bsp::CpuFrequencyMHz::Level_1:
-            [[fallthrough]];
         case bsp::CpuFrequencyMHz::Level_0:
             return profile.minimalFrequency;
         }
@@ -35,7 +32,7 @@ namespace sys::cpu
     AlgorithmResult FrequencyStepping::calculateImplementation(const AlgorithmData &data)
     {
         const auto load           = data.CPUload;
-        const auto startFrequency = data.curentFrequency;
+        const auto startFrequency = data.currentFrequency;
         const auto min            = cpuGovernor.GetMinimumFrequencyRequested();
 
         if (load > powerProfile.frequencyShiftUpperThreshold && startFrequency < bsp::CpuFrequencyMHz::Level_6) {

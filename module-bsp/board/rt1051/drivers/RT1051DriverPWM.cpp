@@ -4,7 +4,6 @@
 #include "RT1051DriverPWM.hpp"
 #include "RT1051DriverPWMhelper.hpp"
 #include <log/log.hpp>
-#include "../board.h"
 #include <algorithm>
 
 namespace drivers
@@ -84,10 +83,10 @@ namespace drivers
 
     void RT1051DriverPWM::SetDutyCycle(std::uint8_t dutyCyclePercent, PWMChannel channel)
     {
-        std::uint8_t dutyCycle =
+        const auto dutyCycle =
             std::clamp(dutyCyclePercent, static_cast<std::uint8_t>(0), static_cast<std::uint8_t>(100));
 
-        auto pwmChannel = getChannelMask(channel);
+        const auto pwmChannel = getChannelMask(channel);
         for (unsigned i = 0; i < enabledChannels.size(); ++i) {
             if (pwmSignalsConfig[i].pwmChannel == pwmChannel) {
                 pwmSignalsConfig[i].dutyCyclePercent = dutyCycle;
@@ -121,9 +120,7 @@ namespace drivers
         if (PWM_GetPwmGeneratorState(base, 1 << pwmModule)) {
             return PwmState::On;
         }
-        else {
-            return PwmState::Off;
-        }
+        return PwmState::Off;
     }
 
     void RT1051DriverPWM::SetupPWMChannel(PWMChannel channel)
@@ -155,7 +152,6 @@ namespace drivers
                                            unsigned numOfChannels,
                                            std::uint32_t _clockFrequency)
     {
-        pwm_mode_t pwmMode = kPWM_SignedCenterAligned;
         PWM_SetupPwm(base, pwmModule, config, numOfChannels, pwmMode, parameters.frequency, _clockFrequency);
     }
 
@@ -174,7 +170,7 @@ namespace drivers
     void RT1051DriverPWM::UpdateClockFrequency(bsp::CpuFrequencyMHz newFrequency)
     {
         cpp_freertos::LockGuard lock(frequencyChangeMutex);
-        std::uint32_t convertedFrequency = static_cast<std::uint32_t>(newFrequency) * bsp::MHz_frequency_multiplier;
+        const auto convertedFrequency = static_cast<std::uint32_t>(newFrequency) * bsp::HzPerMHz;
 
         if (clockFrequency != convertedFrequency) {
             SetupPWMInstance(pwmSignalsConfig.data(), enabledChannels.size(), convertedFrequency);
@@ -250,5 +246,4 @@ namespace drivers
             PWM_SetPwmLdok(base, 1 << pwmModule, true);
         }
     }
-
 } // namespace drivers

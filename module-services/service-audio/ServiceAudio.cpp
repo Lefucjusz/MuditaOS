@@ -621,21 +621,21 @@ void ServiceAudio::MuteCurrentOperation()
     }
 }
 
-bool ServiceAudio::IsBusy()
+Operation::State ServiceAudio::GetOperationState()
 {
     for (auto &input : audioMux.GetAllInputs()) {
         if (input.audio->GetCurrentState() != Audio::State::Idle) {
-            return true;
+            return input.audio->GetCurrentOperation().GetState();
         }
     }
-    return false;
+    return Operation::State::Idle;
 }
 
 sys::MessagePointer ServiceAudio::DataReceivedHandler(sys::DataMessage *msgl, sys::ResponseMessage *resp)
 {
     sys::MessagePointer responseMsg;
-    const auto isBusy = IsBusy();
-    auto &msgType     = typeid(*msgl);
+    const auto operationState = GetOperationState();
+    const auto &msgType     = typeid(*msgl);
 
     if (msgType == typeid(AudioInternalEOFNotificationMessage)) {
         auto *msg = static_cast<AudioInternalEOFNotificationMessage *>(msgl);
@@ -683,17 +683,24 @@ sys::MessagePointer ServiceAudio::DataReceivedHandler(sys::DataMessage *msgl, sy
         responseMsg = HandleKeyPressed(msg->step);
     }
 
-    if (const auto curIsBusy = IsBusy(); isBusy != curIsBusy) {
-        curIsBusy ? cpuSentinel->HoldMinimumFrequency(bsp::CpuFrequencyMHz::Level_6)
-                  : cpuSentinel->ReleaseMinimumFrequency();
+    if (const auto currentOperationState = GetOperationState(); currentOperationState != operationState) {
+        switch (currentOperationState) {
+            case audio::Operation::State::Idle:
+                cpuSentinel->ReleaseMinimumFrequency();
+                break;
+            case audio::Operation::State::Paused:
+                cpuSentinel->HoldMinimumFrequency(bsp::CpuFrequencyMHz::Level_2);
+                break;
+            case audio::Operation::State::Active:
+                cpuSentinel->HoldMinimumFrequency(bsp::CpuFrequencyMHz::Level_5);
+                break;
+        }
     }
 
     if (responseMsg) {
         return responseMsg;
     }
-    else {
-        return std::make_shared<AudioResponseMessage>(RetCode::Failed);
-    }
+    return std::make_shared<AudioResponseMessage>(RetCode::Failed);
 }
 
 std::string ServiceAudio::getSetting(const Setting &setting,

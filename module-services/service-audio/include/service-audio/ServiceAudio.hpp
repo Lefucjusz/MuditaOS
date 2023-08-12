@@ -101,7 +101,7 @@ class ServiceAudio : public sys::Service
     std::string GetSound(const audio::PlaybackType &plType);
     constexpr auto IsResumable(const audio::PlaybackType &type) const -> bool;
     constexpr auto ShouldLoop(const std::optional<audio::PlaybackType> &type) const -> bool;
-    auto IsBusy() -> bool;
+    auto GetOperationState() -> audio::Operation::State;
     auto IsSystemSound(const audio::PlaybackType &type) -> bool;
     audio::PlaybackType generatePlayback(const audio::PlaybackType &type,
                                          const audio::Setting &setting = audio::Setting::Volume);
