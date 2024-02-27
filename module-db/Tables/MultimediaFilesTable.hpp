@@ -25,7 +25,7 @@ namespace db::multimedia_files
         Artist artist{};
         std::string title{};
 
-        inline bool operator==(const Album &rhs)
+        inline bool operator==(const Album &rhs) const
         {
             return ((this->artist == rhs.artist) && (this->title == rhs.title));
         }

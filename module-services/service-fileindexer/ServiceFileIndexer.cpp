@@ -10,12 +10,11 @@
 
 namespace
 {
-    inline constexpr auto fileIndexerServiceStackSize = 1024 * 5;
+    constexpr auto fileIndexerServiceStackSize = 1024 * 5;
 } // namespace
 
 namespace service
 {
-
     ServiceFileIndexer::ServiceFileIndexer(const std::vector<std::string> &paths)
         : sys::Service{service::name::file_indexer, "", fileIndexerServiceStackSize}, mStartupIndexer{paths}
     {

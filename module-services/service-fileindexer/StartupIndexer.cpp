@@ -16,13 +16,13 @@
 
 namespace service::detail
 {
-    namespace fs = std::filesystem;
     using namespace std::literals;
     using namespace std::chrono_literals;
 
-    const auto lock_file_name        = purefs::dir::getSystemVarDirPath() / ".directory_is_indexed";
-    constexpr auto indexing_interval = 50ms;
-    constexpr auto start_delay       = 10000ms;
+    const auto lockFilePath = purefs::dir::getSystemVarDirPath() / ".directory_is_indexed";
+
+    constexpr auto indexingInterval = 50ms;
+    constexpr auto startupDelay     = 10000ms;
 
     bool isDirectoryFullyTraversed(const std::filesystem::recursive_directory_iterator &directory)
     {
@@ -31,23 +31,23 @@ namespace service::detail
 
     bool createLockFile()
     {
-        std::ofstream ofs(lock_file_name);
+        std::ofstream ofs(lockFilePath);
         ofs << time(nullptr);
         return ofs.good();
     }
 
     bool hasLockFile()
     {
-        std::error_code ec;
-        return fs::is_regular_file(lock_file_name, ec);
+        std::error_code errorCode;
+        return std::filesystem::is_regular_file(lockFilePath, errorCode);
     }
 
     bool removeLockFile()
     {
         if (hasLockFile()) {
-            std::error_code ec;
-            if (!remove(lock_file_name, ec)) {
-                LOG_ERROR("Failed to remove lock file, error: %d", ec.value());
+            std::error_code errorCode;
+            if (!remove(lockFilePath, errorCode)) {
+                LOG_ERROR("Failed to remove lock file, error %d", errorCode.value());
                 return false;
             }
         }
@@ -56,9 +56,9 @@ namespace service::detail
 
     std::optional<std::filesystem::recursive_directory_iterator> scanPath(std::vector<std::string>::const_iterator path)
     {
-        std::error_code err;
-        const auto mSubDirIterator = fs::recursive_directory_iterator(*path, err);
-        if (err) {
+        std::error_code errorCode;
+        auto mSubDirIterator = std::filesystem::recursive_directory_iterator(*path, errorCode);
+        if (errorCode) {
             LOG_WARN("Directory '%s' not indexed, it does not exist", path->c_str());
             return std::nullopt;
         }
@@ -72,17 +72,17 @@ namespace service::detail
     auto StartupIndexer::processEntry(std::shared_ptr<sys::Service> svc,
                                       const std::filesystem::recursive_directory_iterator::value_type &entry) -> void
     {
-        if (fs::is_regular_file(entry)) {
-            auto ext = fs::path(entry).extension();
-            if (!isExtSupported(ext)) {
-                LOG_WARN("Not supported ext - %s", ext.c_str());
+        if (std::filesystem::is_regular_file(entry)) {
+            const auto &extension = std::filesystem::path(entry).extension();
+            if (!isExtensionSupported(extension)) {
+                LOG_WARN("Unsupported extension '%s'", extension.c_str());
                 return;
             }
 
-            const auto abspath = fs::absolute(entry).string();
-            const auto inotifyMsg =
-                std::make_shared<purefs::fs::message::inotify>(purefs::fs::inotify_flags::close_write, abspath, ""sv);
-            svc->bus.sendUnicast(inotifyMsg, std::string(service::name::file_indexer));
+            const auto &absPath = std::filesystem::absolute(entry).string();
+            auto inotifyMsg =
+                std::make_shared<purefs::fs::message::inotify>(purefs::fs::inotify_flags::close_write, absPath, ""sv);
+            svc->bus.sendUnicast(std::move(inotifyMsg), std::string(service::name::file_indexer));
         }
     }
 
@@ -94,30 +94,32 @@ namespace service::detail
         if (isDirectoryFullyTraversed(mSubDirIterator)) {
             if (mTopDirIterator == std::cend(directoriesToScan)) {
                 createLockFile();
-                LOG_INFO("Initial startup indexer: Finished");
                 mIdxTimer.stop();
+                LOG_INFO("Initial startup indexing finished");
                 return;
             }
             else {
-                if (auto result = scanPath(mTopDirIterator)) {
+                if (const auto &result = scanPath(mTopDirIterator)) {
                     mSubDirIterator = *result;
                 }
                 mTopDirIterator++;
             }
         }
         else {
-            processEntry(svc, *mSubDirIterator);
+            processEntry(std::move(svc), *mSubDirIterator);
             mSubDirIterator++;
         }
 
-        mIdxTimer.restart(indexing_interval);
+        mIdxTimer.restart(indexingInterval);
     }
 
     // Setup timers for notification
     auto StartupIndexer::setupTimers(std::shared_ptr<sys::Service> svc, std::string_view svc_name) -> void
     {
         mIdxTimer = sys::TimerFactory::createSingleShotTimer(
-            svc.get(), svc_name.data(), start_delay, [this, svc](auto &) { onTimerTimeout(svc); });
+            svc.get(), svc_name.data(), startupDelay, [this, svc]([[maybe_unused]] sys::Timer &t) {
+                onTimerTimeout(svc);
+            });
         mIdxTimer.start();
     }
 
@@ -125,7 +127,7 @@ namespace service::detail
     auto StartupIndexer::start(std::shared_ptr<sys::Service> svc, std::string_view svc_name) -> void
     {
         if (!hasLockFile()) {
-            LOG_INFO("Initial startup indexer: Started");
+            LOG_INFO("Initial startup indexing started");
 
             auto query = std::make_unique<db::multimedia_files::query::RemoveAll>();
             DBServiceAPI::GetQuery(svc.get(), db::Interface::Name::MultimediaFiles, std::move(query));
@@ -135,7 +137,7 @@ namespace service::detail
             mForceStop = false;
         }
         else {
-            LOG_INFO("Initial startup indexer: Not needed");
+            LOG_INFO("Initial startup indexing not required - already indexed");
         }
     }
 

@@ -12,7 +12,7 @@ namespace sys::cpu
 {
     struct AlgorithmData
     {
-        unsigned CPUload                 = 0;
+        unsigned CPUload                      = 0;
         bsp::CpuFrequencyMHz currentFrequency = bsp::CpuFrequencyMHz::Level_6;
         sentinel::View sentinel;
     };

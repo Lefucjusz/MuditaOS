@@ -2,6 +2,7 @@
 // For licensing, see https://github.com/mudita/MuditaOS/LICENSE.md
 
 #pragma once
+
 #include <string>
 #include <memory>
 #include <purefs/fs/inotify_flags.hpp>
@@ -10,10 +11,12 @@ namespace sys
 {
     class Service;
 }
+
 namespace cpp_freertos
 {
     class MutexRecursive;
 }
+
 namespace purefs::fs
 {
     namespace internal
@@ -54,5 +57,4 @@ namespace purefs::fs
         //! Lock the object
         std::unique_ptr<cpp_freertos::MutexRecursive> m_lock;
     };
-
 } // namespace purefs::fs

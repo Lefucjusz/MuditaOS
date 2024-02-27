@@ -8,7 +8,8 @@
 
 namespace sys
 {
-    class Timer; // Forward declaration
+    class Timer;
+
     namespace timer
     {
         using TimerCallback                   = std::function<void(Timer &)>;
@@ -27,6 +28,6 @@ namespace sys
         virtual void start()                                        = 0;
         virtual void restart(std::chrono::milliseconds newInterval) = 0;
         virtual void stop()                                         = 0;
-        virtual bool isActive() const noexcept                      = 0;
+        [[nodiscard]] virtual bool isActive() const noexcept        = 0;
     };
 } // namespace sys

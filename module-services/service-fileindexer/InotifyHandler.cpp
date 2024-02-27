@@ -2,34 +2,93 @@
 // For licensing, see https://github.com/mudita/MuditaOS/LICENSE.md
 
 #include <service-fileindexer/InotifyHandler.hpp>
-
-#include "Common.hpp"
-
-#include <filesystem>
-#include <log/log.hpp>
+#include <service-db/DBServiceAPI.hpp>
 #include <module-db/queries/multimedia_files/QueryMultimediaFilesAdd.hpp>
 #include <module-db/queries/multimedia_files/QueryMultimediaFilesRemove.hpp>
 #include <purefs/fs/inotify_message.hpp>
 #include <purefs/fs/inotify.hpp>
-#include <service-db/DBServiceAPI.hpp>
 #include <tags_fetcher/TagsFetcher.hpp>
+#include <filesystem>
+#include <log/log.hpp>
 #include <Utils.hpp>
+#include "Common.hpp"
 
 namespace service::detail
 {
+    namespace
+    {
+        std::string getMimeType(const std::filesystem::path &path)
+        {
+            const auto extension = utils::stringToLowercase(path.extension());
+            if (extension == ".mp3") {
+                return "audio/mpeg";
+            }
+            if (extension == ".wav") {
+                return "audio/wav";
+            }
+            if (extension == ".flac") {
+                return "audio/flac";
+            }
+            return {};
+        }
+
+        std::optional<db::multimedia_files::MultimediaFilesRecord> createMultimediaFilesRecord(
+            const std::filesystem::path &path)
+        {
+            std::error_code errorCode;
+            const auto fileSize = static_cast<std::size_t>(std::filesystem::file_size(path, errorCode));
+            if (errorCode) {
+                LOG_ERROR("Failed to obtain size of '%s'", path.c_str());
+                return {};
+            }
+            const auto &mimeType = getMimeType(path);
+            const auto &tags     = tags::fetcher::fetchTags(path);
+
+            // clang-format off
+            db::multimedia_files::MultimediaFilesRecord record{
+                Record(DB_ID_NONE),
+                .fileInfo = {
+                    .path = path.string(),
+                    .mediaType = mimeType,
+                    .size = fileSize
+                },
+                .tags = {
+                    .title = tags.title,
+                    .album = {
+                        .artist = tags.artist,
+                        .title  = tags.album
+                    },
+                    .comment = tags.comment,
+                    .genre   = tags.genre,
+                    .year    = tags.year,
+                    .track   = tags.track
+                },
+                .audioProperties = {
+                    .songLength = tags.total_duration_s,
+                    .bitrate    = tags.bitrate,
+                    .sampleRate = tags.sample_rate,
+                    .channels   = tags.num_channel
+                }
+            };
+            // clang-format on
+
+            return record;
+        }
+    } // namespace
+
     InotifyHandler::~InotifyHandler()
     {
         for (const auto &path : monitoredPaths) {
             const auto err = mfsNotifier->rm_watch(path);
             if (err) {
-                LOG_ERROR("Unable to remove watch errno: %i", err);
+                LOG_ERROR("Unable to remove watch, errno %d", err);
             }
         }
     }
 
     bool InotifyHandler::init(std::shared_ptr<sys::Service> service)
     {
-        svc         = service;
+        svc         = std::move(service);
         mfsNotifier = purefs::fs::inotify_create(svc);
         if (!mfsNotifier) {
             LOG_ERROR("Unable to create inotify object");
@@ -45,7 +104,7 @@ namespace service::detail
             return;
         }
         svc->connect(typeid(purefs::fs::message::inotify), [&](sys::Message *request) -> sys::MessagePointer {
-            return handleInotifyMessage(static_cast<purefs::fs::message::inotify *>(request));
+            return handleInotifyMessage(dynamic_cast<purefs::fs::message::inotify *>(request));
         });
     }
 
@@ -55,13 +114,13 @@ namespace service::detail
             LOG_ERROR("Notifier not initialized");
             return false;
         }
-        // Wait for close, delete move to or from location
+        // Wait for close, delete, move to or move from location
         const auto err =
             mfsNotifier->add_watch(monitoredPath,
                                    purefs::fs::inotify_flags::close_write | purefs::fs::inotify_flags::del |
                                        purefs::fs::inotify_flags::move_dst | purefs::fs::inotify_flags::move_src);
         if (err) {
-            LOG_ERROR("Unable to create inotify watch errno: %i", err);
+            LOG_ERROR("Unable to create inotify watch, errno %d", err);
             return false;
         }
         monitoredPaths.emplace_back(monitoredPath);
@@ -70,8 +129,9 @@ namespace service::detail
 
     sys::MessagePointer InotifyHandler::handleInotifyMessage(purefs::fs::message::inotify *inotify)
     {
-        if (inotify == nullptr)
+        if (inotify == nullptr) {
             return sys::msgNotHandled();
+        }
 
         if (inotify->flags && (purefs::fs::inotify_flags::close_write | purefs::fs::inotify_flags::move_dst)) {
             onUpdateOrCreate(inotify->name);
@@ -83,61 +143,6 @@ namespace service::detail
         return sys::msgHandled();
     }
 
-    namespace fs = std::filesystem;
-    namespace
-    {
-        std::string getMimeType(const fs::path &path)
-        {
-            const auto extension = utils::stringToLowercase(path.extension());
-
-            if (extension == ".mp3") {
-                return "audio/mpeg";
-            }
-            if (extension == ".wav") {
-                return "audio/wav";
-            }
-            if (extension == ".flac") {
-                return "audio/flac";
-            }
-            return {};
-        }
-
-        std::optional<db::multimedia_files::MultimediaFilesRecord> CreateMultimediaFilesRecord(const fs::path &path)
-        {
-            std::error_code errorCode;
-            auto fileSize = fs::file_size(path, errorCode);
-            if (errorCode) {
-                LOG_WARN("Can't get file size");
-                return {};
-            }
-            auto mimeType = getMimeType(path);
-            auto tags     = tags::fetcher::fetchTags(path);
-
-            db::multimedia_files::MultimediaFilesRecord record{
-                Record(DB_ID_NONE),
-                .fileInfo = {.path = std::string(path), .mediaType = mimeType, .size = static_cast<size_t>(fileSize)},
-                .tags =
-                    {
-                        .title = tags.title,
-                        .album =
-                            {
-                                .artist = tags.artist,
-                                .title  = tags.album,
-                            },
-                        .comment = tags.comment,
-                        .genre   = tags.genre,
-                        .year    = tags.year,
-                        .track   = tags.track,
-                    },
-                .audioProperties = {.songLength = tags.total_duration_s,
-                                    .bitrate    = tags.bitrate,
-                                    .sampleRate = tags.sample_rate,
-                                    .channels   = tags.num_channel}};
-
-            return record;
-        }
-    } // namespace
-
     // On update or create content
     void InotifyHandler::onUpdateOrCreate(std::string_view path)
     {
@@ -146,13 +151,13 @@ namespace service::detail
             return;
         }
 
-        const auto extension = utils::stringToLowercase(fs::path(path).extension());
-        if (!isExtSupported(extension)) {
-            LOG_WARN("Not supported extension: %s", extension.c_str());
+        const auto &extension = utils::stringToLowercase(std::filesystem::path(path).extension());
+        if (!isExtensionSupported(extension)) {
+            LOG_WARN("Unsupported extension '%s'", extension.c_str());
             return;
         }
 
-        auto record = CreateMultimediaFilesRecord(path);
+        const auto &record = createMultimediaFilesRecord(path);
         if (record.has_value()) {
             auto query = std::make_unique<db::multimedia_files::query::Add>(record.value());
             DBServiceAPI::GetQuery(svc.get(), db::Interface::Name::MultimediaFiles, std::move(query));
@@ -170,9 +175,9 @@ namespace service::detail
             return;
         }
 
-        const auto extension = utils::stringToLowercase(fs::path(path).extension());
-        if (!isExtSupported(extension)) {
-            LOG_WARN("Not supported extension: %s", extension.c_str());
+        const auto &extension = utils::stringToLowercase(std::filesystem::path(path).extension());
+        if (!isExtensionSupported(extension)) {
+            LOG_WARN("Unsupported extension '%s'", extension.c_str());
             return;
         }
 

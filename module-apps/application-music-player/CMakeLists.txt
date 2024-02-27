@@ -32,6 +32,7 @@ target_sources(application-music-player
         AudioNotificationsHandler.hpp
         data/MusicPlayerStyle.hpp
         data/SongsListWindowData.hpp
+        utils/Utils.hpp
         models/SongsModel.hpp
         models/AlbumsModel.hpp
         models/SongsRepository.hpp

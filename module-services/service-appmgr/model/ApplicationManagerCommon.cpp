@@ -459,7 +459,6 @@ namespace app::manager
             return handleLaunchAction(action);
         case actions::ShowPopup:
         case actions::AbortPopup:
-            return handleActionOnFocusedApp(action);
         case actions::NotificationsChanged:
             return handleActionOnFocusedApp(action);
         default:

@@ -39,7 +39,7 @@ namespace
                      secondsRemainder);
         }
 
-        return std::string(timeStringBuffer);
+        return timeStringBuffer;
     };
 } // namespace
 

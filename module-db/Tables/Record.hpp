@@ -6,18 +6,19 @@
 #include <log/log.hpp>
 #include <cstdint>
 
-constexpr uint32_t DB_ID_NONE = 0;
+inline constexpr std::uint32_t DB_ID_NONE = 0;
 
 struct Record
 {
-    uint32_t ID = DB_ID_NONE;
+    std::uint32_t ID = DB_ID_NONE;
 
     Record() = default;
-    Record(uint32_t ID) : ID(ID){};
+    Record(std::uint32_t ID) : ID(ID)
+    {}
 
-    bool isValid() const
+    [[nodiscard]] bool isValid() const
     {
-        auto result = ID != DB_ID_NONE;
+        auto result = (ID != DB_ID_NONE);
         if (!result) {
             LOG_DEBUG("Record validation failed - incorrect ID");
         }

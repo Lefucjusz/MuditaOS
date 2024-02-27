@@ -52,9 +52,7 @@ namespace db::multimedia_files::query
 
 namespace db::multimedia_files
 {
-
     using MultimediaFilesRecordField = TableFields;
-
     using MultimediaFilesRecord = TableRow;
 
     class MultimediaFilesRecordInterface : public RecordInterface<MultimediaFilesRecord, MultimediaFilesRecordField>

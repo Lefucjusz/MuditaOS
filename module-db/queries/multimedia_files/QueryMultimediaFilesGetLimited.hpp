@@ -127,7 +127,7 @@ namespace db::multimedia_files::query
     class GetAlbumsWithMetadataLimited : public Query
     {
       public:
-        GetAlbumsWithMetadataLimited(std::uint32_t offset, std::uint32_t limit); // TODO std::uint32_t
+        GetAlbumsWithMetadataLimited(std::uint32_t offset, std::uint32_t limit);
         [[nodiscard]] auto debugInfo() const -> std::string override;
 
         const std::uint32_t offset = 0;

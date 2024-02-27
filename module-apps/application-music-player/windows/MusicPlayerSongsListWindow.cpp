@@ -64,12 +64,12 @@ namespace gui
         std::string title;
         if (const auto albumData = dynamic_cast<SongsListAlbumData *>(data); albumData != nullptr) {
             const auto &album = albumData->getAlbum();
-            title             = album.title;
+            title             = album.title.empty() ? utils::translate("app_music_player_unknown_album") : album.title;
             presenter->setCurrentlyViewedAlbum(album);
         }
         else if (const auto artistData = dynamic_cast<SongsListArtistData *>(data); artistData != nullptr) {
             const auto &artist = artistData->getArtist();
-            title              = artist;
+            title              = artist.empty() ? utils::translate("app_music_player_unknown_artist") : artist;
             presenter->setCurrentlyViewedArtist(artist);
         }
         else {

@@ -20,13 +20,13 @@ namespace sys
         TimerHandle(TimerHandle &&oth) noexcept;
         TimerHandle &operator=(TimerHandle &&oth) noexcept;
 
-        bool isValid() const noexcept;
+        [[nodiscard]] bool isValid() const noexcept;
         void reset(Timer *newTimer = nullptr) noexcept;
 
         void start() override;
         void restart(std::chrono::milliseconds newInterval) override;
         void stop() override;
-        bool isActive() const noexcept override;
+        [[nodiscard]] bool isActive() const noexcept override;
 
       private:
         Timer *timer = nullptr;

@@ -14,7 +14,6 @@
 
 namespace db::multimedia_files
 {
-
     MultimediaFilesRecordInterface::MultimediaFilesRecordInterface(MultimediaFilesDB *database) : database(database)
     {}
 

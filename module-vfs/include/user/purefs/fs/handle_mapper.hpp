@@ -6,7 +6,6 @@
 #include <vector>
 namespace purefs::fs::internal
 {
-
     template <typename T>
     class handle_mapper
     {
@@ -15,37 +14,46 @@ namespace purefs::fs::internal
         {
             return data[index];
         }
+
         T &operator[](std::size_t index)
         {
             return data[index];
         }
+
         void remove(std::size_t index)
         {
             unused.push_back(index);
             data[index] = {};
         }
-        bool exists(std::size_t index) const
+
+        [[nodiscard]] bool exists(std::size_t index) const
         {
             return index < data.size();
         }
+
         std::size_t insert(T const &value);
+
         auto begin() const
         {
             return data.begin();
         }
+
         auto end() const
         {
             return data.end();
         }
+
         auto size() const
         {
             return data.size();
         }
+
         auto clear() -> void
         {
             data.clear();
             unused.clear();
         }
+
         using value_type = T;
 
       private:

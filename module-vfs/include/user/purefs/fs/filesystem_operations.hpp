@@ -2,6 +2,7 @@
 // For licensing, see https://github.com/mudita/MuditaOS/LICENSE.md
 
 #pragma once
+
 #include <string>
 #include <list>
 #include <tuple>
@@ -88,7 +89,7 @@ namespace purefs::fs
         }
         auto finalize_registration(std::weak_ptr<blkdev::disk_manager> diskmgr)
         {
-            m_diskmm = diskmgr;
+            m_diskmm = std::move(diskmgr);
             return filesystem_register_completed();
         }
 
