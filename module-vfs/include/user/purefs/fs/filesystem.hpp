@@ -2,6 +2,7 @@
 // For licensing, see https://github.com/mudita/MuditaOS/LICENSE.md
 
 #pragma once
+
 #include <string>
 #include <memory>
 #include <list>
@@ -204,9 +205,7 @@ namespace purefs::fs
                 if (!fsops) {
                     return -EIO;
                 }
-                else {
-                    return (fsops.get()->*method)(fil, std::forward<Args>(args)...);
-                }
+                return (fsops.get()->*method)(fil, std::forward<Args>(args)...);
             }
         }
 
@@ -217,8 +216,8 @@ namespace purefs::fs
             if (path.empty()) {
                 return -ENOENT;
             }
-            const auto abspath     = absolute_path(path);
-            auto [mountp, pathpos] = find_mount_point(abspath);
+            const auto &absPath          = absolute_path(path);
+            const auto [mountp, pathpos] = find_mount_point(absPath);
             if (!mountp) {
                 return -ENOENT;
             }
@@ -226,10 +225,10 @@ namespace purefs::fs
                 return -EACCES;
             }
             auto fsops = mountp->fs_ops();
-            if (fsops)
-                return (fsops.get()->*method)(mountp, abspath, std::forward<Args>(args)...);
-            else
+            if (!fsops) {
                 return -EIO;
+            }
+            return (fsops.get()->*method)(mountp, absPath, std::forward<Args>(args)...);
         }
 
         template <class Base, class T, typename... Args>
@@ -242,9 +241,9 @@ namespace purefs::fs
             if (path.empty() || path2.empty()) {
                 return -ENOENT;
             }
-            const auto abspath     = absolute_path(path);
-            const auto abspath2    = absolute_path(path2);
-            auto [mountp, pathpos] = find_mount_point(abspath);
+            const auto &absPath          = absolute_path(path);
+            const auto &absPath2         = absolute_path(path2);
+            const auto [mountp, pathpos] = find_mount_point(absPath);
             if (!mountp) {
                 return -ENOENT;
             }
@@ -256,11 +255,12 @@ namespace purefs::fs
                 return -EXDEV;
             }
             auto fsops = mountp->fs_ops();
-            if (fsops)
-                return (fsops.get()->*method)(mountp, abspath, abspath2, std::forward<Args>(args)...);
-            else
+            if (!fsops) {
                 return -EIO;
+            }
+            return (fsops.get()->*method)(mountp, absPath, absPath2, std::forward<Args>(args)...);
         }
+
         template <class Base, class T, typename... Args>
         inline auto invoke_fops(T Base::*method, fsdir dirp, Args &&...args)
             -> decltype((static_cast<Base *>(nullptr)->*method)(nullptr, std::forward<Args>(args)...))
@@ -278,9 +278,7 @@ namespace purefs::fs
                 if (!fsops) {
                     return -EIO;
                 }
-                else {
-                    return (fsops.get()->*method)(dirp, std::forward<Args>(args)...);
-                }
+                return (fsops.get()->*method)(dirp, std::forward<Args>(args)...);
             }
         }
         auto cleanup_opened_files(std::string_view mount_point) -> void;

@@ -7,9 +7,6 @@
 ContactsAddressTable::ContactsAddressTable(Database *db) : Table(db)
 {}
 
-ContactsAddressTable::~ContactsAddressTable()
-{}
-
 bool ContactsAddressTable::create()
 {
     return true;
@@ -46,7 +43,7 @@ ContactsAddressTableRow ContactsAddressTable::getById(uint32_t id)
     auto retQuery = db->query("SELECT * FROM contact_address WHERE _id=" u32_ ";", id);
 
     if ((retQuery == nullptr) || (retQuery->getRowCount() == 0)) {
-        return ContactsAddressTableRow();
+        return {};
     }
 
     return ContactsAddressTableRow{
@@ -64,7 +61,7 @@ std::vector<ContactsAddressTableRow> ContactsAddressTable::getLimitOffset(uint32
         db->query("SELECT * from contact_address ORDER BY contact_id LIMIT " u32_ " OFFSET " u32_ ";", limit, offset);
 
     if ((retQuery == nullptr) || (retQuery->getRowCount() == 0)) {
-        return std::vector<ContactsAddressTableRow>();
+        return {};
     }
 
     std::vector<ContactsAddressTableRow> ret;
@@ -87,14 +84,13 @@ std::vector<ContactsAddressTableRow> ContactsAddressTable::getLimitOffsetByField
                                                                                  ContactAddressTableFields field,
                                                                                  const char *str)
 {
-
     std::string fieldName;
     switch (field) {
     case ContactAddressTableFields::Mail:
         fieldName = "mail";
         break;
     default:
-        return std::vector<ContactsAddressTableRow>();
+        return {};
     }
 
     auto retQuery =
@@ -105,7 +101,7 @@ std::vector<ContactsAddressTableRow> ContactsAddressTable::getLimitOffsetByField
                   offset);
 
     if ((retQuery == nullptr) || (retQuery->getRowCount() == 0)) {
-        return std::vector<ContactsAddressTableRow>();
+        return {};
     }
 
     std::vector<ContactsAddressTableRow> ret;
@@ -123,7 +119,7 @@ std::vector<ContactsAddressTableRow> ContactsAddressTable::getLimitOffsetByField
     return ret;
 }
 
-uint32_t ContactsAddressTable::count()
+std::uint32_t ContactsAddressTable::count()
 {
     auto queryRet = db->query("SELECT COUNT(*) FROM contact_address;");
 
@@ -131,10 +127,10 @@ uint32_t ContactsAddressTable::count()
         return 0;
     }
 
-    return uint32_t{(*queryRet)[0].getUInt32()};
+    return (*queryRet)[0].getUInt32();
 }
 
-uint32_t ContactsAddressTable::countByFieldId(const char *field, uint32_t id)
+std::uint32_t ContactsAddressTable::countByFieldId(const char *field, std::uint32_t id)
 {
     auto queryRet = db->query("SELECT COUNT(*) FROM contact_address WHERE %q=" u32_ ";", field, id);
 
@@ -142,5 +138,5 @@ uint32_t ContactsAddressTable::countByFieldId(const char *field, uint32_t id)
         return 0;
     }
 
-    return uint32_t{(*queryRet)[0].getUInt32()};
+    return (*queryRet)[0].getUInt32();
 }

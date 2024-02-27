@@ -16,13 +16,13 @@ namespace tags::fetcher
              * 0 for unknown, 1 for PCM, 2 for ADPCM, 3 for 32/64-bit IEEE754
              *
              * MuditaOS does not support WAV ADPCM encoding
-             * */
+             */
             constexpr auto WAV_ADPCM = 2;
-            auto wav_properties      = dynamic_cast<const TagLib::RIFF::WAV::Properties *>(properties);
-            if (wav_properties == nullptr) {
+            const auto wavProperties = dynamic_cast<const TagLib::RIFF::WAV::Properties *>(properties);
+            if (wavProperties == nullptr) {
                 return true;
             }
-            return wav_properties->format() != WAV_ADPCM;
+            return (wavProperties->format() != WAV_ADPCM);
         }
 
         std::string getTitleFromFilePath(const std::string &path)
@@ -59,13 +59,13 @@ namespace tags::fetcher
                     title = getTitleFromFilePath(filePath);
                 }
 
-                const uint32_t total_duration_s = properties->length();
-                const uint32_t duration_min     = total_duration_s / utils::secondsInMinute;
-                const uint32_t duration_hour    = duration_min / utils::secondsInMinute;
-                const uint32_t duration_sec     = total_duration_s % utils::secondsInMinute;
-                const uint32_t sample_rate      = properties->sampleRate();
-                const uint32_t num_channel      = properties->channels();
-                const uint32_t bitrate          = properties->bitrate();
+                const std::uint32_t total_duration_s = properties->length();
+                const std::uint32_t duration_min     = total_duration_s / utils::secondsInMinute;
+                const std::uint32_t duration_hour    = duration_min / utils::secondsInMinute;
+                const std::uint32_t duration_sec     = total_duration_s % utils::secondsInMinute;
+                const std::uint32_t sample_rate      = properties->sampleRate();
+                const std::uint32_t num_channel      = properties->channels();
+                const std::uint32_t bitrate          = properties->bitrate();
 
                 return Tags{total_duration_s,
                             duration_hour,
@@ -92,5 +92,4 @@ namespace tags::fetcher
     {
         return fetchTagsInternal(filePath).value_or(Tags{filePath, getTitleFromFilePath(filePath)});
     }
-
 } // namespace tags::fetcher

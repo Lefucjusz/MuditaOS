@@ -635,7 +635,7 @@ sys::MessagePointer ServiceAudio::DataReceivedHandler(sys::DataMessage *msgl, sy
 {
     sys::MessagePointer responseMsg;
     const auto operationState = GetOperationState();
-    const auto &msgType     = typeid(*msgl);
+    const auto &msgType       = typeid(*msgl);
 
     if (msgType == typeid(AudioInternalEOFNotificationMessage)) {
         auto *msg = static_cast<AudioInternalEOFNotificationMessage *>(msgl);
@@ -685,15 +685,15 @@ sys::MessagePointer ServiceAudio::DataReceivedHandler(sys::DataMessage *msgl, sy
 
     if (const auto currentOperationState = GetOperationState(); currentOperationState != operationState) {
         switch (currentOperationState) {
-            case audio::Operation::State::Idle:
-                cpuSentinel->ReleaseMinimumFrequency();
-                break;
-            case audio::Operation::State::Paused:
-                cpuSentinel->HoldMinimumFrequency(bsp::CpuFrequencyMHz::Level_2);
-                break;
-            case audio::Operation::State::Active:
-                cpuSentinel->HoldMinimumFrequency(bsp::CpuFrequencyMHz::Level_5);
-                break;
+        case audio::Operation::State::Idle:
+            cpuSentinel->ReleaseMinimumFrequency();
+            break;
+        case audio::Operation::State::Paused:
+            cpuSentinel->HoldMinimumFrequency(bsp::CpuFrequencyMHz::Level_2);
+            break;
+        case audio::Operation::State::Active:
+            cpuSentinel->HoldMinimumFrequency(bsp::CpuFrequencyMHz::Level_5);
+            break;
         }
     }
 

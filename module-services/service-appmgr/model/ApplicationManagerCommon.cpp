@@ -458,9 +458,7 @@ namespace app::manager
         case actions::Launch:
             return handleLaunchAction(action);
         case actions::ShowPopup:
-            [[fallthrough]];
         case actions::AbortPopup:
-            return handleActionOnFocusedApp(action);
         case actions::NotificationsChanged:
             return handleActionOnFocusedApp(action);
         default:

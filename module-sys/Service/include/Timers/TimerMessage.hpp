@@ -7,7 +7,7 @@
 
 namespace sys
 {
-    class Timer; // Forward declaration
+    class Timer;
 
     class TimerMessage : public SystemMessage
     {

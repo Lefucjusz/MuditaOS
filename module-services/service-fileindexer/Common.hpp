@@ -10,29 +10,25 @@
 
 namespace service::detail
 {
-    namespace fs = std::filesystem;
+    /* File extensions indexing allow list */
+    constexpr std::array<std::string_view, 3> allowedExtensions{".wav", ".mp3", ".flac"};
 
-    // File extensions indexing allow list
-    constexpr std::array<std::string_view, 3> allowed_exts{".wav", ".mp3", ".flac"};
+    /* This is a debug feature, enabling to override allowed extension types above */
+    constexpr auto allowAllExtensions = false;
 
-    // This is debug feature, it overrides allowed extension types above
-    constexpr bool allow_all_exts = false;
-
-    inline bool isExtSupported(const fs::path &path)
+    inline bool isExtensionSupported(const std::filesystem::path &path)
     {
-        if (allow_all_exts) {
+        if (allowAllExtensions) {
             return true;
         }
 
-        return std::any_of(allowed_exts.begin(), allowed_exts.end(), [&path](const fs::path &ext) {
-            if (path.has_extension() && path.extension() == ext) {
+        return std::any_of(allowedExtensions.begin(), allowedExtensions.end(), [&path](const auto &extension) {
+            if (path.has_extension() && path.extension() == extension) {
                 return true;
             }
-            // if empty string with extension only
-            if (path == ext) {
-                return true;
-            }
-            return false;
+
+            /* If empty string with extension only */
+            return (path == extension);
         });
     }
 } // namespace service::detail

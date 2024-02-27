@@ -21,7 +21,7 @@ namespace app::music_player
         model->createData([this](const db::multimedia_files::AlbumWithMetadata &albumWithMetadata) {
             const db::multimedia_files::Album album = {.artist = albumWithMetadata.artist,
                                                        .title  = albumWithMetadata.title};
-            auto switchData = std::make_unique<gui::SongsListAlbumData>(album);
+            auto switchData                         = std::make_unique<gui::SongsListAlbumData>(album);
             application->switchWindow(gui::name::window::songs_list, std::move(switchData));
             return true;
         });

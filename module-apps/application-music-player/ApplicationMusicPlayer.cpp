@@ -58,7 +58,7 @@ namespace app
     {
         bus.channels.push_back(sys::BusChannel::ServiceAudioNotifications);
 
-        const auto paths = std::vector<std::string>{purefs::dir::getUserMediaPath()}; // TODO why here
+        const auto &paths = std::vector<std::string>{purefs::dir::getUserMediaPath()}; // TODO why here
 
         auto songsCache       = std::make_unique<app::music::SongsCache>(this);
         priv->songsRepository = std::make_shared<app::music::SongsRepository>(this, std::move(songsCache));

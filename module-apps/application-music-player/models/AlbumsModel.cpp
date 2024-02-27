@@ -2,20 +2,10 @@
 // For licensing, see https://github.com/mudita/MuditaOS/LICENSE.md
 
 #include "AlbumsModel.hpp"
-#include "module-apps/application-music-player/data/MusicPlayerStyle.hpp"
-#include "application-music-player/widgets/FolderItem.hpp"
+#include "data/MusicPlayerStyle.hpp"
+#include "widgets/FolderItem.hpp"
+#include "utils/Utils.hpp"
 #include <ListView.hpp>
-#include <time/time_constants.hpp>
-
-namespace
-{
-    std::string createMinutesSecondsString(std::uint32_t seconds)
-    {
-        const auto minutes          = seconds / utils::time::secondsInMinute;
-        const auto secondsRemainder = seconds % utils::time::secondsInMinute;
-        return std::to_string(minutes) + "m " + std::to_string(secondsRemainder) + "s";
-    };
-} // namespace
 
 namespace app::music
 {
@@ -48,8 +38,10 @@ namespace app::music
             return nullptr;
         }
 
+        const auto &albumTitle =
+            album->title.empty() ? utils::translate("app_music_player_unknown_album") : album->title;
         const auto item =
-            new gui::FolderItem(album->title, createMinutesSecondsString(album->totalLength), album->songsCount);
+            new gui::FolderItem(albumTitle, utils::createMinutesSecondsString(album->totalLength), album->songsCount);
 
         item->activatedCallback = [this, album](gui::Item &) {
             if (onEnterPressedCallback == nullptr) {

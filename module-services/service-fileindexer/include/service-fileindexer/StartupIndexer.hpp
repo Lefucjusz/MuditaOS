@@ -11,12 +11,12 @@ namespace service::detail
 {
     class StartupIndexer
     {
-
       public:
         explicit StartupIndexer(const std::vector<std::string> &paths);
         ~StartupIndexer()                      = default;
         StartupIndexer(const StartupIndexer &) = delete;
         StartupIndexer &operator=(StartupIndexer) = delete;
+
         auto start(std::shared_ptr<sys::Service> svc, std::string_view svc_name) -> void;
         void reset();
         void stop();

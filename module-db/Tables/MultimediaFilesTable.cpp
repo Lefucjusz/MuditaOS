@@ -241,7 +241,7 @@ namespace db::multimedia_files
                                                                       const char *str)
     {
         const auto &fieldName = getFieldName(field);
-        if (fieldName.empty() || str == nullptr) {
+        if (fieldName.empty() || (str == nullptr)) {
             return {};
         }
 
@@ -258,7 +258,7 @@ namespace db::multimedia_files
     std::uint32_t MultimediaFilesTable::count()
     {
         const auto &retQuery = db->query("SELECT COUNT(*) FROM files;");
-        if (!retQuery || retQuery->getRowCount() == 0) {
+        if (!retQuery || (retQuery->getRowCount() == 0)) {
             return 0;
         }
 
@@ -268,7 +268,7 @@ namespace db::multimedia_files
     std::uint32_t MultimediaFilesTable::countArtists()
     {
         const auto &retQuery = db->query("SELECT COUNT (DISTINCT artist) FROM files;");
-        if (!retQuery || retQuery->getRowCount() == 0) {
+        if (!retQuery || (retQuery->getRowCount() == 0)) {
             return 0;
         }
 
@@ -318,8 +318,8 @@ namespace db::multimedia_files
 
     std::uint32_t MultimediaFilesTable::countAlbums()
     {
-        const auto &retQuery = db->query("SELECT COUNT(*) FROM (SELECT DISTINCT artist,album from files);");
-        if (!retQuery || retQuery->getRowCount() == 0) {
+        const auto &retQuery = db->query("SELECT COUNT(*) FROM (SELECT DISTINCT album,artist from files);");
+        if (!retQuery || (retQuery->getRowCount() == 0)) {
             return 0;
         }
 

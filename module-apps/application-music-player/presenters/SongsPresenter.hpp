@@ -38,13 +38,13 @@ namespace app::music_player
 
             virtual ~Presenter() noexcept = default;
 
-            virtual std::shared_ptr<app::music::SongsModel> getModel() const             = 0;
+            virtual std::shared_ptr<app::music::SongsModel> getModel() const = 0;
 
             virtual void setCurrentlyViewedAlbum(const db::multimedia_files::Album &album)    = 0;
             virtual void setCurrentlyViewedArtist(const db::multimedia_files::Artist &artist) = 0;
             virtual void setAllSongsView()                                                    = 0;
 
-            virtual void createData()                                                    = 0;
+            virtual void createData() = 0;
 
             virtual bool play(const std::string &filePath) = 0;
             virtual bool pause()                           = 0;
@@ -70,7 +70,7 @@ namespace app::music_player
                                 std::shared_ptr<app::music::SongsModel> model,
                                 std::unique_ptr<AbstractAudioOperations> &&audioOperations);
 
-        std::shared_ptr<app::music::SongsModel> getModel() const override;
+        [[nodiscard]] std::shared_ptr<app::music::SongsModel> getModel() const override;
 
         void setCurrentlyViewedAlbum(const db::multimedia_files::Album &album) override;
         void setCurrentlyViewedArtist(const db::multimedia_files::Artist &artist) override;
