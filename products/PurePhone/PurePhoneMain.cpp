@@ -112,7 +112,7 @@ int main()
 {
     constexpr auto ApplicationName = "PurePhone";
 
-    const std::vector<std::string> fileIndexerAudioPaths = {{purefs::dir::getUserMediaPath()}};
+    std::vector<std::string> fileIndexerAudioPaths = {purefs::dir::getUserMediaPath()};
 
     prof::init();
 
@@ -239,11 +239,11 @@ int main()
             applications.push_back(app::CreateLauncher<app::ApplicationCalendar>(app::name_calendar));
 #endif
 #ifdef ENABLE_APP_MUSIC_PLAYER
-            applications.push_back(app::CreateLauncher<app::ApplicationMusicPlayer>(app::name_music_player));
+            applications.push_back(app::CreateLauncher<app::ApplicationMusicPlayer>(app::name_music_player, app::Closeable::False));
 #endif
 #ifdef ENABLE_APP_MEDITATION
             applications.push_back(
-                app::CreateLauncher<app::ApplicationMeditation>(app::name_meditation, app::Closeable::True));
+                app::CreateLauncher<app::ApplicationMeditation>(app::name_meditation));
 #endif
 #ifdef ENABLE_APP_CALCULATOR
             applications.push_back(app::CreateLauncher<app::ApplicationCalculator>(app::name_calculator));

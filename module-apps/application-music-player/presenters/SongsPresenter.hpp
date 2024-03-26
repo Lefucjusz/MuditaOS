@@ -23,12 +23,12 @@ namespace app::music_player
             };
 
             virtual ~View() noexcept                                     = default;
-            virtual void updateSongsState(std::optional<db::multimedia_files::MultimediaFilesRecord> record,
-                                          RecordState state)             = 0;
-            virtual void updateSongProgress(float progress)              = 0;
-            virtual void refreshWindow()                                 = 0;
-            virtual void setNavBarTemporaryMode(const std::string &text) = 0;
-            virtual void restoreFromNavBarTemporaryMode()                = 0;
+            virtual auto updateSongsState(std::optional<db::multimedia_files::MultimediaFilesRecord> record,
+                                          RecordState state) -> void             = 0;
+            virtual auto updateSongProgress(float progress) -> void              = 0;
+            virtual auto refreshWindow() -> void                                 = 0;
+            virtual auto setNavBarTemporaryMode(const std::string &text) -> void = 0;
+            virtual auto restoreFromNavBarTemporaryMode() -> void                = 0;
         };
 
         class Presenter : public BasePresenter<SongsContract::View>
@@ -38,91 +38,97 @@ namespace app::music_player
 
             virtual ~Presenter() noexcept = default;
 
-            virtual std::shared_ptr<app::music::SongsModel> getModel() const = 0;
+            virtual auto getModel() const -> std::shared_ptr<app::music::SongsModel>  = 0;
 
-            virtual void setCurrentlyViewedAlbum(const db::multimedia_files::Album &album)    = 0;
-            virtual void setCurrentlyViewedArtist(const db::multimedia_files::Artist &artist) = 0;
-            virtual void setAllSongsView()                                                    = 0;
+            virtual auto setCurrentlyViewedAlbum(const db::multimedia_files::Album &album) -> void    = 0;
+            virtual auto setCurrentlyViewedArtist(const db::multimedia_files::Artist &artist) -> void = 0;
+            virtual auto setAllSongsView() -> void                                                    = 0;
 
-            virtual void createData() = 0;
+            virtual auto createData() -> void = 0;
 
-            virtual bool play(const std::string &filePath) = 0;
-            virtual bool pause()                           = 0;
-            virtual bool resume()                          = 0;
-            virtual bool stop()                            = 0;
-            virtual bool playNext()                        = 0;
-            virtual bool playPrevious()                    = 0;
+            virtual auto play(const std::string &filePath) -> bool = 0;
+            virtual auto pause() -> bool                           = 0;
+            virtual auto resume() -> bool                          = 0;
+            virtual auto stop() -> bool                            = 0;
+            virtual auto playNext() -> bool                        = 0;
+            virtual auto playPrevious() -> bool                    = 0;
 
-            virtual void songsStateRequest()                                      = 0;
-            virtual void progressStateRequest()                                   = 0;
-            virtual void setPlayingStateCallback(OnPlayingStateChangeCallback cb) = 0;
-            virtual bool handleAudioStopNotification(audio::Token token)          = 0;
-            virtual bool handleAudioEofNotification(audio::Token token)           = 0;
-            virtual bool handleAudioPausedNotification(audio::Token token)        = 0;
-            virtual bool handleAudioResumedNotification(audio::Token token)       = 0;
-            virtual bool handlePlayOrPauseRequest()                               = 0;
+            virtual auto songsStateRequest() -> void                                      = 0;
+            virtual auto progressStateRequest() -> void                                   = 0;
+            virtual auto setPlayingStateCallback(OnPlayingStateChangeCallback &&cb) -> void = 0;
+            virtual auto handleAudioStopNotification(audio::Token token) -> bool          = 0;
+            virtual auto handleAudioEofNotification(audio::Token token) -> bool           = 0;
+            virtual auto handleAudioPausedNotification(audio::Token token) -> bool        = 0;
+            virtual auto handleAudioResumedNotification(audio::Token token) -> bool       = 0;
+            virtual auto handlePlayOrPauseRequest() -> bool                               = 0;
         };
     };
 
     class SongsPresenter : public SongsContract::Presenter
     {
       public:
-        explicit SongsPresenter(app::ApplicationCommon *app,
+        SongsPresenter(app::ApplicationCommon *app,
                                 std::shared_ptr<app::music::SongsModel> model,
                                 std::unique_ptr<AbstractAudioOperations> &&audioOperations);
 
-        [[nodiscard]] std::shared_ptr<app::music::SongsModel> getModel() const override;
+        [[nodiscard]] auto getModel() const -> std::shared_ptr<app::music::SongsModel> override;
 
-        void setCurrentlyViewedAlbum(const db::multimedia_files::Album &album) override;
-        void setCurrentlyViewedArtist(const db::multimedia_files::Artist &artist) override;
-        void setAllSongsView() override;
+        auto setCurrentlyViewedAlbum(const db::multimedia_files::Album &album) -> void override;
+        auto setCurrentlyViewedArtist(const db::multimedia_files::Artist &artist) -> void override;
+        auto setAllSongsView() -> void override;
 
-        void createData() override;
+        auto createData() -> void override;
 
-        bool play(const std::string &filePath) override;
-        bool pause() override;
-        bool resume() override;
-        bool stop() override;
-        bool playNext() override;
-        bool playPrevious() override;
+        auto play(const std::string &filePath) -> bool override;
+        auto pause() -> bool override;
+        auto resume() -> bool override;
+        auto stop() -> bool override;
+        auto playNext() -> bool override;
+        auto playPrevious() -> bool override;
 
-        void songsStateRequest() override;
-        void progressStateRequest() override;
-        void setPlayingStateCallback(std::function<void(app::music::SongState)> cb) override;
-        bool handleAudioStopNotification(audio::Token token) override;
-        bool handleAudioEofNotification(audio::Token token) override;
-        bool handleAudioPausedNotification(audio::Token token) override;
-        bool handleAudioResumedNotification(audio::Token token) override;
-        bool handlePlayOrPauseRequest() override;
+        auto songsStateRequest() -> void override;
+        auto progressStateRequest() -> void override;
+        auto setPlayingStateCallback(OnPlayingStateChangeCallback &&cb) -> void override;
+        auto handleAudioStopNotification(audio::Token token) -> bool override;
+        auto handleAudioEofNotification(audio::Token token) -> bool override;
+        auto handleAudioPausedNotification(audio::Token token) -> bool override;
+        auto handleAudioResumedNotification(audio::Token token) -> bool override;
+        auto handlePlayOrPauseRequest() -> bool override;
 
       protected:
-        void handleTrackProgressTick();
+        auto handleTrackProgressTick() -> void;
 
       private:
-        void updateViewSongState();
-        void updateViewProgressState();
-        void refreshView();
-        void updateTrackProgressRatio();
-        void resetTrackProgressRatio();
+        auto updateViewSongState() -> void;
+        auto updateViewProgressState() -> void;
+        auto refreshView() -> void;
+        auto updateTrackProgressRatio() -> void;
+        auto resetTrackProgressRatio() -> void;
 
         /// Request state dependant audio operation
-        bool requestAudioOperation(const std::string &filePath = "");
-        void setViewNavBarTemporaryMode(const std::string &text);
-        void restoreViewNavBarFromTemporaryMode();
+        auto requestAudioOperation(const std::string &filePath = {}) -> bool;
+        auto setViewNavBarTemporaryMode(const std::string &text) -> void;
+        auto restoreViewNavBarFromTemporaryMode() -> void;
 
-        void playCallback(audio::RetCode retCode, const audio::Token &token, const std::string &filePath);
-        void pauseCallback(audio::RetCode retCode, const audio::Token &token);
-        void resumeCallback(audio::RetCode retCode, const audio::Token &token);
-        void stopCallback(audio::RetCode retCode, const audio::Token &token);
+        auto playCallback(audio::RetCode retCode, const audio::Token &token, const std::string &filePath) -> void;
+        auto pauseCallback(audio::RetCode retCode, const audio::Token &token) -> void;
+        auto resumeCallback(audio::RetCode retCode, const audio::Token &token) -> void;
+        auto stopCallback(audio::RetCode retCode, const audio::Token &token) -> void;
+
+        auto startAutoStopTimer() -> void;
+        auto stopAutoStopTimer() -> void;
 
         std::shared_ptr<app::music::SongsModel> songsModel;
         std::unique_ptr<AbstractAudioOperations> audioOperations;
-        std::function<void(app::music::SongState)> changePlayingStateCallback = nullptr;
+        OnPlayingStateChangeCallback changePlayingStateCallback{nullptr};
+
+        sys::TimerHandle autoStopTimer;
 
         sys::TimerHandle songProgressTimer;
         std::chrono::time_point<std::chrono::system_clock> songProgressTimestamp;
         std::chrono::milliseconds songMillisecondsElapsed{0};
-        float currentProgressRatio = 0.0f;
-        bool waitingToPlay         = false;
+        float currentProgressRatio{0.0f};
+
+        bool waitingToPlay{false};
     };
 } // namespace app::music_player

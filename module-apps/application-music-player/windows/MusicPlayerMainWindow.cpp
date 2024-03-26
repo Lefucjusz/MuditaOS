@@ -184,7 +184,7 @@ namespace gui
                         if (window.empty()) {
                             return true;
                         }
-                        application->switchWindow(window, nullptr);
+                        application->switchWindow(window);
                         return true;
                     },
                     [=](Item &item) {
@@ -627,18 +627,16 @@ namespace gui
     {
         if (inputEvent.isShortRelease(KeyCode::KEY_LEFT)) {
             presenter->playPrevious();
-            return true;
         }
-
-        if (inputEvent.isShortRelease(KeyCode::KEY_RIGHT)) {
+        else if (inputEvent.isShortRelease(KeyCode::KEY_RIGHT)) {
             presenter->playNext();
-            return true;
         }
-
-        if (inputEvent.isShortRelease(KeyCode::KEY_ENTER)) {
+        else if (inputEvent.isShortRelease(KeyCode::KEY_ENTER)) {
             presenter->handlePlayOrPauseRequest();
         }
-
+        else if (inputEvent.isLongRelease(KeyCode::KEY_ENTER)) {
+            presenter->stop();
+        }
         return true;
     }
 } /* namespace gui */

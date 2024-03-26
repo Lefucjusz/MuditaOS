@@ -24,10 +24,10 @@ namespace app::music
 
         SongsModel(app::ApplicationCommon *app, std::shared_ptr<SongsRepository> songsRepository);
 
-        void createData(const OnShortReleaseCallback &shortReleaseCb,
-                        const OnLongPressCallback &longPressCb,
-                        const OnSetNavBarTemporaryCallback &navBarTemporaryModeCb,
-                        const OnRestoreNavBarTemporaryCallback &navBarRestoreFromTemporaryModeCb);
+        void createData(OnShortReleaseCallback &&shortReleaseCb,
+                        OnLongPressCallback &&longPressCb,
+                        OnSetNavBarTemporaryCallback &&navBarTemporaryModeCb,
+                        OnRestoreNavBarTemporaryCallback &&navBarRestoreFromTemporaryModeCb);
 
         [[nodiscard]] auto requestRecordsCount() -> unsigned override;
         [[nodiscard]] auto getMinimalItemSpaceRequired() const -> unsigned override;

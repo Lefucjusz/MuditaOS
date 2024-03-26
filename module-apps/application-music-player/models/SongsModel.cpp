@@ -78,7 +78,7 @@ namespace app::music
             item->setState(gui::SongItem::ItemState::None);
         }
 
-        item->activatedCallback = [this, song](gui::Item &) {
+        item->activatedCallback = [this, song]([[maybe_unused]] gui::Item &item) {
             if (shortReleaseCallback != nullptr) {
                 activatedRecord = *song;
                 shortReleaseCallback(song->fileInfo.path);
@@ -87,7 +87,7 @@ namespace app::music
             return false;
         };
 
-        item->inputCallback = [=](gui::Item &, const gui::InputEvent &event) {
+        item->inputCallback = [this]([[maybe_unused]] gui::Item &item, const gui::InputEvent &event) {
             if (event.isLongRelease(gui::KeyCode::KEY_ENTER)) {
                 if (longPressCallback != nullptr) {
                     longPressCallback();
@@ -100,15 +100,15 @@ namespace app::music
         return item;
     }
 
-    auto SongsModel::createData(const OnShortReleaseCallback &shortReleaseCb,
-                                const OnLongPressCallback &longPressCb,
-                                const OnSetNavBarTemporaryCallback &navBarTemporaryModeCb,
-                                const OnRestoreNavBarTemporaryCallback &navBarRestoreFromTemporaryModeCb) -> void
+    auto SongsModel::createData(OnShortReleaseCallback &&shortReleaseCb,
+                                OnLongPressCallback &&longPressCb,
+                                OnSetNavBarTemporaryCallback &&navBarTemporaryModeCb,
+                                OnRestoreNavBarTemporaryCallback &&navBarRestoreFromTemporaryModeCb) -> void
     {
-        this->shortReleaseCallback           = shortReleaseCb;
-        this->longPressCallback              = longPressCb;
-        this->navBarTemporaryMode            = navBarTemporaryModeCb;
-        this->navBarRestoreFromTemporaryMode = navBarRestoreFromTemporaryModeCb;
+        shortReleaseCallback           = std::move(shortReleaseCb);
+        longPressCallback              = std::move(longPressCb);
+        navBarTemporaryMode            = std::move(navBarTemporaryModeCb);
+        navBarRestoreFromTemporaryMode = std::move(navBarRestoreFromTemporaryModeCb);
     }
 
     auto SongsModel::setCurrentlyViewedAlbum(const db::multimedia_files::Album &album) -> void

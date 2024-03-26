@@ -75,6 +75,6 @@ namespace sys
 
     bool TimerHandle::isActive() const noexcept
     {
-        return isValid() ? timer->isActive() : false;
+        return isValid() && timer->isActive();
     }
 } // namespace sys

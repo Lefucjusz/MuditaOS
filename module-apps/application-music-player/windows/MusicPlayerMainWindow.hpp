@@ -13,7 +13,6 @@ namespace gui
 {
     class ListView;
     class ImageBox;
-    class OptionSettings;
 
     /// Start MP app window with possible three internal states:
     /// - init screen
@@ -33,7 +32,7 @@ namespace gui
             LIBRARY    // music library
         };
 
-        explicit MusicPlayerMainWindow(app::ApplicationCommon *app,
+        MusicPlayerMainWindow(app::ApplicationCommon *app,
                                        std::shared_ptr<app::music_player::SongsContract::Presenter> presenter);
 
         void onBeforeShow(ShowMode mode, SwitchData *data) override;
