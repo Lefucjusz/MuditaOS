@@ -13,11 +13,11 @@ namespace app::music
     {
       public:
         using OnGetMusicFilesListCallback =
-            std::function<bool(const std::vector<db::multimedia_files::MultimediaFilesRecord> &, unsigned)>;
+            std::function<bool(const std::vector<db::multimedia_files::MultimediaFilesRecord> &records, unsigned count)>;
         using OnGetAlbumsListCallback =
-            std::function<bool(const std::vector<db::multimedia_files::AlbumWithMetadata> &, unsigned)>;
+            std::function<bool(const std::vector<db::multimedia_files::AlbumWithMetadata> &records, unsigned count)>;
         using OnGetArtistListCallback =
-            std::function<bool(const std::vector<db::multimedia_files::ArtistWithMetadata> &, unsigned)>;
+            std::function<bool(const std::vector<db::multimedia_files::ArtistWithMetadata> &records, unsigned count)>;
 
         SongsRepository(ApplicationCommon *application, std::unique_ptr<SongsCache> songsCache);
 
@@ -47,15 +47,15 @@ namespace app::music
         auto initCache(const db::multimedia_files::Album &album) -> void;
         auto initCache(const db::multimedia_files::Artist &artist) -> void;
 
-        auto getCurrentCacheAlbum() const noexcept -> std::optional<db::multimedia_files::Album>;
-        auto getCurrentCacheArtist() const noexcept -> std::optional<db::multimedia_files::Artist>;
+        [[nodiscard]] auto getCurrentCacheAlbum() const noexcept -> std::optional<db::multimedia_files::Album>;
+        [[nodiscard]] auto getCurrentCacheArtist() const noexcept -> std::optional<db::multimedia_files::Artist>;
 
         auto refreshCache(const std::string &filePath, std::uint32_t currentOffset) -> void;
 
-        auto getNextFilePath(const std::string &filePath) const -> std::string;
-        auto getPreviousFilePath(const std::string &filePath) const -> std::string;
+        [[nodiscard]] auto getNextFilePath(const std::string &filePath) const -> std::string;
+        [[nodiscard]] auto getPreviousFilePath(const std::string &filePath) const -> std::string;
 
-        auto getRecord(const std::string &filePath) const -> std::optional<db::multimedia_files::MultimediaFilesRecord>;
+        [[nodiscard]] auto getRecord(const std::string &filePath) const -> std::optional<db::multimedia_files::MultimediaFilesRecord>;
 
       private:
         app::ApplicationCommon *application = nullptr;

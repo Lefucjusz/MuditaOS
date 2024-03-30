@@ -41,15 +41,15 @@ namespace app::music
         auto initRepository() -> void;
         auto updateRepository(const std::string &filePath) -> void;
 
-        auto getNextFilePath(const std::string &filePath) const -> std::string;
-        auto getPreviousFilePath(const std::string &filePath) const -> std::string;
+        [[nodiscard]] auto getNextFilePath(const std::string &filePath) const -> std::string;
+        [[nodiscard]] auto getPreviousFilePath(const std::string &filePath) const -> std::string;
 
-        auto isSongPlaying() const noexcept -> bool;
+        [[nodiscard]] auto isSongPlaying() const noexcept -> bool;
         auto setCurrentSongState(SongState songState) noexcept -> void;
-        auto getCurrentFileToken() const noexcept -> std::optional<audio::Token>;
-        auto getActivatedRecord() const noexcept -> std::optional<db::multimedia_files::MultimediaFilesRecord>;
+        [[nodiscard]] auto getCurrentFileToken() const noexcept -> std::optional<audio::Token>;
+        [[nodiscard]] auto getActivatedRecord() const noexcept -> std::optional<db::multimedia_files::MultimediaFilesRecord>;
 
-        auto getCurrentSongContext() const noexcept -> SongContext;
+        [[nodiscard]] auto getCurrentSongContext() const noexcept -> SongContext;
         auto setCurrentSongContext(const SongContext &context) -> void;
         auto clearCurrentSongContext() -> void;
 

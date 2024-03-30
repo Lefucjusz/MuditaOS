@@ -54,9 +54,9 @@ namespace app::music
         return item;
     }
 
-    auto AlbumsModel::createData(const OnActivateCallback &onActivateCallback) -> void
+    auto AlbumsModel::createData(OnActivateCallback &&onActivateCallback) -> void
     {
-        onEnterPressedCallback = onActivateCallback;
+        onEnterPressedCallback = std::move(onActivateCallback);
     }
 
     auto AlbumsModel::clearData() -> void

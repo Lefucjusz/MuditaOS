@@ -55,7 +55,7 @@ namespace gui
 
     auto MusicPlayerSongsListWindow::onBeforeShow([[maybe_unused]] ShowMode mode, SwitchData *data) -> void
     {
-        presenter->attach(this);
+//        presenter->attach(this);
 
         if (mode == ShowMode::GUI_SHOW_RETURN) {
             return;

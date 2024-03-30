@@ -70,7 +70,10 @@ namespace db::multimedia_files
         Tags tags{};
         AudioProperties audioProperties{};
 
-        auto isValid() const -> bool;
+        auto isValid() const -> bool
+        {
+            return (!fileInfo.path.empty() && Record::isValid());
+        }
     };
 
     enum class TableFields
@@ -101,7 +104,7 @@ namespace db::multimedia_files
         auto add(TableRow entry) -> bool override;
         auto removeById(std::uint32_t id) -> bool override;
         auto removeByField(TableFields field, const char *str) -> bool override;
-        bool removeAll() override final;
+        auto removeAll() -> bool override final;
         auto update(TableRow entry) -> bool override;
         auto getById(std::uint32_t id) -> TableRow override;
         auto getLimitOffset(std::uint32_t offset, std::uint32_t limit) -> std::vector<TableRow> override;
@@ -134,9 +137,9 @@ namespace db::multimedia_files
         TableRow getByPath(const std::string &path);
 
         /// @note entry.ID is skipped
-        bool addOrUpdate(const TableRow &entry, const std::string &oldPath = "");
+        auto addOrUpdate(const TableRow &entry, const std::string &oldPath = "") -> bool;
 
       private:
-        auto getFieldName(TableFields field) -> std::string;
+        auto getFieldName(TableFields field) const -> std::string;
     };
 } // namespace db::multimedia_files

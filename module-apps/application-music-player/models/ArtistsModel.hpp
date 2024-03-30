@@ -14,7 +14,7 @@ namespace app::music
                          public gui::ListItemProvider
     {
       public:
-        using OnActivateCallback = std::function<bool(const db::multimedia_files::ArtistWithMetadata &)>;
+        using OnActivateCallback = std::function<bool(const db::multimedia_files::ArtistWithMetadata &record)>;
 
         ArtistsModel(app::ApplicationCommon *app, std::shared_ptr<SongsRepository> songsRepository);
 
@@ -22,7 +22,7 @@ namespace app::music
         [[nodiscard]] auto getMinimalItemSpaceRequired() const -> unsigned override;
         auto getItem(gui::Order order) -> gui::ListItem * override;
         auto requestRecords(std::uint32_t offset, std::uint32_t limit) -> void override;
-        auto createData(const OnActivateCallback &onActivateCallback) -> void;
+        auto createData(OnActivateCallback &&onActivateCallback) -> void;
         auto clearData() -> void;
 
       private:

@@ -6,62 +6,61 @@
 #include <Database/QueryResult.hpp>
 #include <Utils.hpp>
 #include <magic_enum.hpp>
-#include <inttypes.h>
+#include <cinttypes>
 
 namespace db::multimedia_files
 {
-    TableRow CreateTableRow(const QueryResult &result)
+    namespace
     {
-        if (result.getFieldCount() != magic_enum::enum_count<TableFields>() + 1) {
-            return TableRow{};
-        }
-
-        return TableRow{
-            result[0].getUInt32(),    // ID
-            {result[1].getString(),   // path
-             result[2].getString(),   // mediaType
-             result[3].getUInt32()},  // size
-            {result[4].getString(),   // title
-             {result[5].getString(),  // artist
-              result[6].getString()}, // album title
-             result[7].getString(),   // comment
-             result[8].getString(),   // genre
-             result[9].getUInt32(),   // year
-             result[10].getUInt32()}, // track
-            {result[11].getUInt32(),  // songLength
-             result[12].getUInt32(),  // bitrate
-             result[13].getUInt32(),  // sample rate
-             result[14].getUInt32()}, // channels
-        };
-    }
-
-    auto TableRow::isValid() const -> bool
-    {
-        return (!fileInfo.path.empty() && Record::isValid());
-    }
-
-    auto constructMatchPattern = [](const std::vector<std::string> &paths) -> std::string {
-        std::string ret;
-        for (auto e = paths.begin(); e != paths.end(); e++) {
-            ret += "path LIKE '" + *e + "%%'";
-            if (std::next(e) != paths.end()) {
-                ret += " or ";
+        auto constructMatchPattern(const std::vector<std::string> &paths) -> std::string
+        {
+            std::string ret;
+            for (auto e = paths.begin(); e != paths.end(); e++) {
+                ret += "path LIKE '" + *e + "%%'";
+                if (std::next(e) != paths.end()) {
+                    ret += " or ";
+                }
             }
+            return ret;
         }
-        return ret;
-    };
+
+        auto CreateTableRow(const QueryResult &result) -> TableRow
+        {
+            if (result.getFieldCount() != magic_enum::enum_count<TableFields>() + 1) {
+                return TableRow{};
+            }
+
+            return TableRow{
+                result[0].getUInt32(),    // ID
+                {result[1].getString(),   // path
+                 result[2].getString(),   // mediaType
+                 result[3].getUInt32()},  // size
+                {result[4].getString(),   // title
+                 {result[5].getString(),  // artist
+                  result[6].getString()}, // album title
+                 result[7].getString(),   // comment
+                 result[8].getString(),   // genre
+                 result[9].getUInt32(),   // year
+                 result[10].getUInt32()}, // track
+                {result[11].getUInt32(),  // songLength
+                 result[12].getUInt32(),  // bitrate
+                 result[13].getUInt32(),  // sample rate
+                 result[14].getUInt32()}, // channels
+            };
+        }
+    }
 
     MultimediaFilesTable::MultimediaFilesTable(Database *db) : Table(db)
     {
         createTableRow = CreateTableRow;
     }
 
-    bool MultimediaFilesTable::create()
+    auto MultimediaFilesTable::create() -> bool
     {
         return true;
     }
 
-    bool MultimediaFilesTable::add(TableRow entry)
+    auto MultimediaFilesTable::add(TableRow entry) -> bool
     {
         return db->execute("INSERT INTO files (path, media_type, size, title, artist, album, "
                            "comment, genre, year, track, song_length, bitrate, sample_rate, channels) "
@@ -98,12 +97,12 @@ namespace db::multimedia_files
                            entry.audioProperties.channels);
     }
 
-    bool MultimediaFilesTable::removeById(std::uint32_t id)
+    auto MultimediaFilesTable::removeById(std::uint32_t id) -> bool
     {
         return db->execute("DELETE FROM files WHERE _id=" u32_ ";", id);
     }
 
-    bool MultimediaFilesTable::removeByField(TableFields field, const char *str)
+    auto MultimediaFilesTable::removeByField(TableFields field, const char *str) -> bool
     {
         const auto &fieldName = getFieldName(field);
 
@@ -114,12 +113,12 @@ namespace db::multimedia_files
         return db->execute("DELETE FROM files WHERE %q=" str_ ";", fieldName.c_str(), str);
     }
 
-    bool MultimediaFilesTable::removeAll()
+    auto MultimediaFilesTable::removeAll() -> bool
     {
         return db->execute("DELETE FROM files;");
     }
 
-    bool MultimediaFilesTable::update(TableRow entry)
+    auto MultimediaFilesTable::update(TableRow entry) -> bool
     {
         return db->execute("UPDATE files SET path=" str_c "media_type=" str_c "size=" u32_c "title=" str_c
                            "artist=" str_c "album=" str_c "comment=" str_c "genre=" str_c "year=" u32_c "track=" u32_c
@@ -142,7 +141,7 @@ namespace db::multimedia_files
                            entry.ID);
     }
 
-    bool MultimediaFilesTable::addOrUpdate(const TableRow &entry, const std::string &oldPath)
+    auto MultimediaFilesTable::addOrUpdate(const TableRow &entry, const std::string &oldPath) -> bool
     {
         const auto &path = oldPath.empty() ? entry.fileInfo.path : oldPath;
 
@@ -171,37 +170,37 @@ namespace db::multimedia_files
                            path.c_str());
     }
 
-    TableRow MultimediaFilesTable::getById(std::uint32_t id)
+    auto MultimediaFilesTable::getById(std::uint32_t id) -> TableRow
     {
         const auto &retQuery = db->query("SELECT * FROM files WHERE _id=" u32_ ";", id);
         if ((retQuery == nullptr) || (retQuery->getRowCount() == 0)) {
-            return TableRow();
+            return {};
         }
 
         return CreateTableRow(*retQuery);
     }
 
-    TableRow MultimediaFilesTable::getByPath(const std::string &path)
+    auto MultimediaFilesTable::getByPath(const std::string &path) -> TableRow
     {
         const auto &retQuery = db->query("SELECT * FROM files WHERE path=" str_ ";", path.c_str());
         if ((retQuery == nullptr) || (retQuery->getRowCount() == 0)) {
-            return TableRow();
+            return {};
         }
 
         return CreateTableRow(*retQuery);
     }
 
-    std::vector<TableRow> MultimediaFilesTable::getLimitOffset(std::uint32_t offset, std::uint32_t limit)
+    auto MultimediaFilesTable::getLimitOffset(std::uint32_t offset, std::uint32_t limit) -> std::vector<TableRow>
     {
         auto retQuery =
-            db->query("SELECT * from files ORDER BY title ASC LIMIT " u32_ " OFFSET " u32_ ";", limit, offset);
+            db->query("SELECT * from files ORDER BY title COLLATE NOCASE ASC LIMIT " u32_ " OFFSET " u32_ ";", limit, offset);
         return retQueryUnpack(std::move(retQuery));
     }
 
     auto MultimediaFilesTable::getArtistsLimitOffset(std::uint32_t offset, std::uint32_t limit) -> std::vector<Artist>
     {
         const auto &retQuery = db->query(
-            "SELECT DISTINCT artist from files ORDER BY artist ASC LIMIT " u32_ " OFFSET " u32_ ";", limit, offset);
+            "SELECT DISTINCT artist from files ORDER BY artist COLLATE NOCASE ASC LIMIT " u32_ " OFFSET " u32_ ";", limit, offset);
         if ((retQuery == nullptr) || (retQuery->getRowCount() == 0)) {
             return {};
         }
@@ -235,10 +234,10 @@ namespace db::multimedia_files
         return outVector;
     }
 
-    std::vector<TableRow> MultimediaFilesTable::getLimitOffsetByField(std::uint32_t offset,
+    auto MultimediaFilesTable::getLimitOffsetByField(std::uint32_t offset,
                                                                       std::uint32_t limit,
                                                                       TableFields field,
-                                                                      const char *str)
+                                                                      const char *str) -> std::vector<TableRow>
     {
         const auto &fieldName = getFieldName(field);
         if (fieldName.empty() || (str == nullptr)) {
@@ -246,7 +245,7 @@ namespace db::multimedia_files
         }
 
         auto retQuery =
-            db->query("SELECT * FROM files WHERE %q=" str_ " ORDER BY title ASC LIMIT " u32_ " OFFSET " u32_ ";",
+            db->query("SELECT * FROM files WHERE %q=" str_ " ORDER BY title COLLATE NOCASE ASC LIMIT " u32_ " OFFSET " u32_ ";",
                       fieldName.c_str(),
                       str,
                       limit,
@@ -255,7 +254,7 @@ namespace db::multimedia_files
         return retQueryUnpack(std::move(retQuery));
     }
 
-    std::uint32_t MultimediaFilesTable::count()
+    auto MultimediaFilesTable::count() -> std::uint32_t
     {
         const auto &retQuery = db->query("SELECT COUNT(*) FROM files;");
         if (!retQuery || (retQuery->getRowCount() == 0)) {
@@ -265,7 +264,7 @@ namespace db::multimedia_files
         return (*retQuery)[0].getUInt32();
     }
 
-    std::uint32_t MultimediaFilesTable::countArtists()
+    auto MultimediaFilesTable::countArtists() -> std::uint32_t
     {
         const auto &retQuery = db->query("SELECT COUNT (DISTINCT artist) FROM files;");
         if (!retQuery || (retQuery->getRowCount() == 0)) {
@@ -278,7 +277,7 @@ namespace db::multimedia_files
     auto MultimediaFilesTable::getAlbumsLimitOffset(std::uint32_t offset, std::uint32_t limit) -> std::vector<Album>
     {
         const auto &retQuery =
-            db->query("SELECT DISTINCT artist,album FROM files ORDER BY album ASC LIMIT " u32_ " OFFSET " u32_ ";",
+            db->query("SELECT DISTINCT artist,album FROM files ORDER BY album COLLATE NOCASE ASC LIMIT " u32_ " OFFSET " u32_ ";",
                       limit,
                       offset);
         if ((retQuery == nullptr) || (retQuery->getRowCount() == 0)) {
@@ -316,7 +315,7 @@ namespace db::multimedia_files
         return outVector;
     }
 
-    std::uint32_t MultimediaFilesTable::countAlbums()
+    auto MultimediaFilesTable::countAlbums() -> std::uint32_t
     {
         const auto &retQuery = db->query("SELECT COUNT(*) FROM (SELECT DISTINCT album,artist from files);");
         if (!retQuery || (retQuery->getRowCount() == 0)) {
@@ -326,7 +325,7 @@ namespace db::multimedia_files
         return (*retQuery)[0].getUInt32();
     }
 
-    std::uint32_t MultimediaFilesTable::countByFieldId(const char *field, std::uint32_t id)
+    auto MultimediaFilesTable::countByFieldId(const char *field, std::uint32_t id) -> std::uint32_t
     {
         if (field == nullptr) {
             return 0;
@@ -340,7 +339,7 @@ namespace db::multimedia_files
         return (*retQuery)[0].getUInt32();
     }
 
-    std::string MultimediaFilesTable::getFieldName(TableFields field)
+    auto MultimediaFilesTable::getFieldName(TableFields field) const -> std::string
     {
         return utils::enumToString(field);
     }
@@ -375,7 +374,7 @@ namespace db::multimedia_files
         -> std::vector<TableRow>
     {
         auto retQuery = db->query("SELECT * FROM files WHERE artist=" str_ " AND album=" str_
-                                  " ORDER BY track ASC LIMIT " u32_ " OFFSET " u32_ ";",
+                                  " ORDER BY track COLLATE NOCASE ASC LIMIT " u32_ " OFFSET " u32_ ";",
                                   album.artist.c_str(),
                                   album.title.c_str(),
                                   limit,
@@ -412,8 +411,9 @@ namespace db::multimedia_files
                                                      std::uint32_t offset,
                                                      std::uint32_t limit) -> std::vector<TableRow>
     {
-        const auto &query = "SELECT * FROM files WHERE " + constructMatchPattern(paths) + " ORDER BY title ASC LIMIT " +
-                            std::to_string(limit) + " OFFSET " + std::to_string(offset) + ";";
+        const auto &query = "SELECT * FROM files WHERE " + constructMatchPattern(paths) +
+                            " ORDER BY title COLLATE NOCASE ASC LIMIT " + std::to_string(limit) +
+                            " OFFSET " + std::to_string(offset) + ";";
         auto retQuery = db->query(query.c_str());
         return retQueryUnpack(std::move(retQuery));
     }

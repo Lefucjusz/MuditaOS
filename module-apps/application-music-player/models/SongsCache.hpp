@@ -8,13 +8,13 @@
 #include <module-db/Interface/MultimediaFilesRecord.hpp>
 #include <apps-common/ApplicationCommon.hpp>
 
-namespace app::music // TODO add AbstractSongsCache?
+namespace app::music
 {
     class SongsCache : public app::AsyncCallbackReceiver
     {
       public:
         using OnUpdateCacheCallback = std::function<void(
-            const std::vector<db::multimedia_files::MultimediaFilesRecord> &, unsigned, std::uint32_t)>;
+            const std::vector<db::multimedia_files::MultimediaFilesRecord> &record, unsigned, std::uint32_t offset)>;
 
         explicit SongsCache(app::ApplicationCommon *app);
 
@@ -24,13 +24,13 @@ namespace app::music // TODO add AbstractSongsCache?
 
         auto update(const std::string &currentFilePath, std::uint32_t currentOffset) -> void;
 
-        auto getCachedFileIndex(const std::string &filePath) const -> std::size_t;
-        auto getPreviousFilePath(const std::string &currentFilePath) const -> std::string;
-        auto getNextFilePath(const std::string &currentFilePath) const -> std::string;
-        auto getRecord(const std::string &filePath) const -> std::optional<db::multimedia_files::MultimediaFilesRecord>;
+        [[nodiscard]] auto getCachedFileIndex(const std::string &filePath) const -> std::size_t;
+        [[nodiscard]] auto getPreviousFilePath(const std::string &currentFilePath) const -> std::string;
+        [[nodiscard]] auto getNextFilePath(const std::string &currentFilePath) const -> std::string;
+        [[nodiscard]] auto getRecord(const std::string &filePath) const -> std::optional<db::multimedia_files::MultimediaFilesRecord>;
 
-        auto getCurrentAlbum() const noexcept -> std::optional<db::multimedia_files::Album>;
-        auto getCurrentArtist() const noexcept -> std::optional<db::multimedia_files::Artist>;
+        [[nodiscard]] auto getCurrentAlbum() const noexcept -> std::optional<db::multimedia_files::Album>;
+        [[nodiscard]] auto getCurrentArtist() const noexcept -> std::optional<db::multimedia_files::Artist>;
 
       private:
         auto setCurrentAlbum(const db::multimedia_files::Album &album) -> void;
@@ -38,7 +38,7 @@ namespace app::music // TODO add AbstractSongsCache?
         auto clearMetadata() -> void;
 
         auto updateCache(std::uint32_t offset, std::uint32_t limit, const OnUpdateCacheCallback &callback) -> void;
-        auto calculateQueryOffset(std::uint32_t viewOffset) const noexcept -> std::uint32_t;
+        [[nodiscard]] auto calculateQueryOffset(std::uint32_t viewOffset) const noexcept -> std::uint32_t;
 
         auto initCacheCallback(const std::vector<db::multimedia_files::MultimediaFilesRecord> &newRecords,
                                unsigned newRecordsCount) -> void;

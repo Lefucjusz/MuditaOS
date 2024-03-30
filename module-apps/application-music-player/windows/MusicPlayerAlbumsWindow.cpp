@@ -7,11 +7,6 @@
 #include <ListView.hpp>
 #include <Icon.hpp>
 
-/*
- * TODO:
- * - conditional default on untagged songs
- */
-
 namespace gui
 {
     MusicPlayerAlbumsWindow::MusicPlayerAlbumsWindow(
