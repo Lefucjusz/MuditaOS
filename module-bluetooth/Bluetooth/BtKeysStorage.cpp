@@ -14,10 +14,10 @@ namespace bluetooth
 {
     namespace strings
     {
-        constexpr inline auto keys     = "keys";
-        constexpr inline auto link_key = "link_key";
-        constexpr inline auto bd_addr  = "bd_addr";
-        constexpr inline auto type     = "type";
+        constexpr auto keys     = "keys";
+        constexpr auto link_key = "link_key";
+        constexpr auto bd_addr  = "bd_addr";
+        constexpr auto type     = "type";
     } // namespace strings
 
     auto KeyStorage::getKeyStorage() -> btstack_link_key_db_t *

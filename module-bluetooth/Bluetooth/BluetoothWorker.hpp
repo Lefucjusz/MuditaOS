@@ -88,7 +88,6 @@ class BluetoothWorker : private sys::Worker
 
     void registerQueues();
     void onLinkKeyAdded(const std::string &deviceAddress);
-    void removeFromBoundDevices(uint8_t *addr);
 
     std::shared_ptr<Mailbox<bluetooth::Command, QueueHandle_t, WorkerLock>> workerQueue;
 

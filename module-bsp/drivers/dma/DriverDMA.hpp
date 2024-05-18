@@ -9,7 +9,6 @@
 
 namespace drivers
 {
-
     enum class DMAInstances
     {
         DMA_0,
@@ -22,6 +21,8 @@ namespace drivers
     class DriverDMAHandle
     {
       public:
+        virtual ~DriverDMAHandle() = default;
+
         virtual void *GetHandle() = 0;
     };
 

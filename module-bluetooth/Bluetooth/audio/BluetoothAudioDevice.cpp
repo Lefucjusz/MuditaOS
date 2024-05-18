@@ -220,8 +220,6 @@ auto BluetoothAudioDevice::fillSbcAudioBuffer() -> int
     const auto audioSamplesPerSbcBuffer = btstack_sbc_encoder_num_audio_frames();
     const auto context                             = &AVRCP::mediaTracker;
 
-    assert(context != nullptr);
-
     while ((context->samples_ready >= audioSamplesPerSbcBuffer) && ((context->max_media_payload_size - context->sbc_storage_count) >= btstack_sbc_encoder_sbc_buffer_length())) {
         audio::Stream::Span dataSpan;
         Sink::_stream->peek(dataSpan);
