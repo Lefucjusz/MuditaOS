@@ -13,7 +13,6 @@
 
 namespace audio
 {
-
     using namespace AudioServiceMessage;
 
     PlaybackOperation::PlaybackOperation(const std::string &filePath,
@@ -225,5 +224,4 @@ namespace audio
     {
         Stop();
     }
-
 } // namespace audio

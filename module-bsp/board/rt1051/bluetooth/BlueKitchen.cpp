@@ -33,16 +33,16 @@ BlueKitchen &BlueKitchen::getInstance()
     return *instance;
 }
 
-BTDevice::Error BlueKitchen::read(uint8_t *buf, size_t nbytes)
+BTDevice::Error BlueKitchen::read(std::uint8_t *buf, std::size_t size)
 {
-    logHciStack("BlueKitchen requested to read %d bytes", nbytes);
+    logHciStack("BlueKitchen requested to read %d bytes", size);
 
     std::uint8_t val;
 
     readBuffer = buf;
-    readLength = nbytes;
+    readLength = size;
 
-    if (BluetoothCommon::read(buf, nbytes) == Success) {
+    if (BluetoothCommon::read(buf, size) == Success) {
         val = bluetooth::Message::EvtReceiving;
         xQueueSend(qHandle, &val, portMAX_DELAY);
         return BTDevice::Success;
@@ -54,7 +54,7 @@ BTDevice::Error BlueKitchen::read(uint8_t *buf, size_t nbytes)
     }
 }
 
-BTDevice::Error BlueKitchen::write(const uint8_t *buf, size_t size)
+BTDevice::Error BlueKitchen::write(const std::uint8_t *buf, std::size_t size)
 {
     logHciStack("BlueKitchen sends %d bytes", size);
 

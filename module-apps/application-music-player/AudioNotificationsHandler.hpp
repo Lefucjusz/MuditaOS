@@ -8,6 +8,7 @@
 class AudioStopNotification;
 class AudioPausedNotification;
 class AudioResumedNotification;
+
 namespace app::music_player
 {
     class AudioNotificationsHandler

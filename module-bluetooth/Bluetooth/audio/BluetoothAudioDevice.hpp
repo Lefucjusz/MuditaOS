@@ -62,6 +62,8 @@ namespace bluetooth
         auto getTraits() const -> Traits override;
         auto getSourceFormat() -> ::audio::AudioFormat override;
 
+        audio::AudioDevice::RetCode waitUntilStreamPaused();
+
         audio::AudioDevice::RetCode Start() override;
         audio::AudioDevice::RetCode Stop() override;
         audio::AudioDevice::RetCode Resume() override;

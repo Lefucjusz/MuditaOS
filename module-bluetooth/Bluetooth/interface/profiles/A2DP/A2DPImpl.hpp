@@ -21,11 +21,12 @@ extern "C"
 namespace bluetooth
 {
     class AVRCP;
+
     class A2DP::A2DPImpl
     {
       public:
         auto init() -> Result::Code;
-        void deInit();
+        void deinit();
         void connect();
         void disconnect();
         void start();
@@ -64,8 +65,6 @@ namespace bluetooth
         static Devicei device;
 
         static btstack_packet_callback_registration_t hciEventCallbackRegistration;
-
-        static QueueHandle_t sourceQueue;
 
         static bool isConnected;
     };

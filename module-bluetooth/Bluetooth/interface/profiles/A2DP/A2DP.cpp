@@ -32,7 +32,7 @@ namespace bluetooth
     A2DP::~A2DP()
     {
         pimpl->disconnect();
-        pimpl->deInit();
+        pimpl->deinit();
     }
 
     A2DP::A2DP(A2DP &other) : pimpl(new A2DPImpl(*other.pimpl))
@@ -114,13 +114,11 @@ namespace bluetooth
 
     btstack_packet_callback_registration_t A2DP::A2DPImpl::hciEventCallbackRegistration;
 
-    QueueHandle_t A2DP::A2DPImpl::sourceQueue = nullptr;
-
     bool A2DP::A2DPImpl::isConnected = false;
 
     auto A2DP::A2DPImpl::init() -> Result::Code
     {
-        // request role change on reconnecting headset to always use them in slave mode
+        // Request role change on reconnecting headset to always use them in slave mode
         hci_set_master_slave_policy(0);
 
         Profile::initL2cap();
@@ -169,7 +167,6 @@ namespace bluetooth
         std::memset(AVRCP::sdpControllerServiceBuffer, 0, sizeof(AVRCP::sdpControllerServiceBuffer));
 
         const std::uint16_t controllerSupportedFeatures = AVRCP_FEATURE_MASK_CATEGORY_MONITOR_OR_AMPLIFIER;
-
         avrcp_controller_create_sdp_record(AVRCP::sdpControllerServiceBuffer,
                                            avrcpControllerSdpRecordHandle,
                                            controllerSupportedFeatures,
@@ -446,12 +443,6 @@ namespace bluetooth
                      AVRCP::mediaTracker.local_seid,
                      a2dp_subevent_stream_established_get_remote_seid(packet));
 
-            sourceQueue = xQueueCreate(sourceQueueLength, sizeof(AudioData_t));
-            if (sourceQueue == nullptr) {
-                LOG_ERROR("Failed to create sourceQueue!");
-                break;
-            }
-
             sendAudioEvent(audio::EventType::BluetoothA2DPDeviceState, audio::Event::DeviceState::Connected);
         } break;
 
@@ -589,7 +580,7 @@ namespace bluetooth
 
     void A2DP::A2DPImpl::sendAudioEvent(audio::EventType event, audio::Event::DeviceState state)
     {
-        auto evt       = std::make_shared<audio::Event>(event, state);
+        auto evt       = std::make_unique<audio::Event>(event, state);
         auto msg       = std::make_shared<AudioEventRequest>(std::move(evt));
         ownerService->bus.sendUnicast(std::move(msg), service::name::evt_manager);
     }
@@ -614,7 +605,7 @@ namespace bluetooth
         A2DP::A2DPImpl::audioDevice = std::move(newAudioDevice);
     }
 
-    void A2DP::A2DPImpl::deInit()
+    void A2DP::A2DPImpl::deinit()
     {
         sdp_unregister_service(a2dpSdpRecordHandle);
         sdp_unregister_service(avrcpControllerSdpRecordHandle);

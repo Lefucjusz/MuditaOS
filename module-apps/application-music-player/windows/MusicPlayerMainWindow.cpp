@@ -40,7 +40,7 @@ namespace
         }
 
         return timeStringBuffer;
-    };
+    }
 } // namespace
 
 namespace gui

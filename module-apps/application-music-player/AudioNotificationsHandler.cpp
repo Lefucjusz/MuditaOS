@@ -7,10 +7,9 @@
 
 namespace app::music_player
 {
-
     AudioNotificationsHandler::AudioNotificationsHandler(
         std::shared_ptr<app::music_player::SongsContract::Presenter> presenter)
-        : presenter(presenter)
+        : presenter(std::move(presenter))
     {}
 
     sys::MessagePointer AudioNotificationsHandler::handleAudioStopNotification(

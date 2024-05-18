@@ -7,7 +7,6 @@
 
 namespace gui
 {
-
     using namespace musicPlayerStyle;
 
     SongItem::SongItem(const std::string &authorName,

@@ -10,13 +10,8 @@
 #include "Audio/decoder/Decoder.hpp"
 
 #include <chrono>
-using namespace std::chrono_literals;
 
-namespace audio::playbackDefaults
-{
-    constexpr audio::Volume defaultLoudspeakerVolume = 10;
-    constexpr audio::Volume defaultHeadphonesVolume  = 2;
-} // namespace audio::playbackDefaults
+using namespace std::chrono_literals;
 
 namespace audio
 {
@@ -50,5 +45,4 @@ namespace audio
 
         DecoderWorker::EndOfFileCallback endOfFileCallback;
     };
-
 } // namespace audio
