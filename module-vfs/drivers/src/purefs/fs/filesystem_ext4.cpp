@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022, Mudita Sp. z.o.o. All rights reserved.
+// Copyright (c) 2017-2024, Mudita Sp. z.o.o. All rights reserved.
 // For licensing, see https://github.com/mudita/MuditaOS/LICENSE.md
 
 #include <memory>
@@ -17,7 +17,6 @@
 #include <climits>
 #include <syslimits.h>
 #include <sys/statvfs.h>
-#include <errno.h>
 #include <cstring>
 #include <algorithm>
 #include <sys/stat.h>
@@ -43,6 +42,7 @@ namespace purefs::fs::drivers
             auto err = efs_fun(vfile->filp(), std::forward<Args>(args)...);
             return -err;
         }
+
         template <typename T>
         auto invoke_efs(filesystem_ext4::fsmount mnt, T efs_fun, std::string_view oldpath, std::string_view newpath)
         {
@@ -57,6 +57,7 @@ namespace purefs::fs::drivers
             auto err = efs_fun(native_old.c_str(), native_new.c_str());
             return -err;
         }
+
         template <typename T, typename... Args>
         auto invoke_efs(filesystem_ext4::fsmount fmnt, T efs_fun, std::string_view path, Args &&...args)
         {
@@ -70,6 +71,7 @@ namespace purefs::fs::drivers
             auto err = efs_fun(native_path.c_str(), std::forward<Args>(args)...);
             return -err;
         }
+
         template <typename T, typename... Args>
         auto invoke_efs(filesystem_ext4::fsdir zdir, T lfs_fun, Args &&...args)
         {
@@ -87,7 +89,8 @@ namespace purefs::fs::drivers
             auto err = lfs_fun(vdir->dirp(), std::forward<Args>(args)...);
             return err;
         }
-        inline auto ino_to_st_mode(int dtype)
+
+        inline auto ino_to_st_mode(int dtype) -> int
         {
             switch (dtype) {
             case EXT4_DE_REG_FILE:
@@ -106,8 +109,8 @@ namespace purefs::fs::drivers
                 return 0;
             }
         }
-
     } // namespace
+
     auto filesystem_ext4::mount_prealloc(std::shared_ptr<blkdev::internal::disk_handle> diskh,
                                          std::string_view path,
                                          unsigned flags) -> fsmount
@@ -129,7 +132,7 @@ namespace purefs::fs::drivers
         ext4_locker _lck(vmnt);
         auto [bd, err] = ext4::internal::append_volume(disk_mngr(), disk);
         if (err) {
-            LOG_ERROR("Unable to append volume err: %i", err);
+            LOG_ERROR("Unable to append volume errno %i", err);
             return err;
         }
         /** If verbosed lwext4 debug is required please uncomment
@@ -140,13 +143,13 @@ namespace purefs::fs::drivers
         // ext4_dmask_set(DEBUG_ALL);
         err = ext4_device_register(bd, disk->name().c_str());
         if (err) {
-            LOG_ERROR("Unable to register device with err: %i", err);
+            LOG_ERROR("Unable to register device errno %i", err);
             ext4::internal::remove_volume(bd);
             return -err;
         }
         const auto mnt_path = vmnt->mount_path();
         // Mount
-        err = ext4_mount(disk->name().c_str(), mnt_path.c_str(), 0);
+        err = ext4_mount(disk->name().c_str(), mnt_path.c_str(), false);
         if (err) {
             LOG_ERROR("Unable to mount ext4 errno %i", err);
             ext4_device_unregister(disk->name().c_str());
@@ -167,9 +170,10 @@ namespace purefs::fs::drivers
         if (err) {
             LOG_WARN("Unable to start journaling errno %i", err);
         }
+        // Enable write back cache
         err = ext4_block_cache_write_back(bd, true);
         if (err) {
-            LOG_ERROR("Unable to switch to write back mode errno %i", err);
+            LOG_ERROR("Unable to start write back cache errno %i", err);
             ext4_umount(mnt_path.c_str());
             ext4_device_unregister(disk->name().c_str());
             ext4::internal::remove_volume(bd);
@@ -191,12 +195,12 @@ namespace purefs::fs::drivers
         ext4_locker _lck(vmnt);
         auto err = ext4_cache_write_back(mnt->mount_path().c_str(), false);
         if (err) {
-            LOG_WARN("Unable to disable cache wb errno %i", err);
+            LOG_WARN("Unable to disable write back cache errno %i", err);
             err = 0;
         }
         err = ext4_journal_stop(mnt->mount_path().c_str());
         if (err) {
-            LOG_WARN("Unable to stop ext4 journal %i", err);
+            LOG_WARN("Unable to stop ext4 journal errno %i", err);
             err = 0;
         }
         err = ext4_umount(mnt->mount_path().c_str());
@@ -204,8 +208,11 @@ namespace purefs::fs::drivers
             LOG_ERROR("Unable to umount device");
             return -err;
         }
-        //! NOTE: Bug in the lib it always return ENOENT
-        ext4_device_unregister(vmnt->disk()->name().c_str());
+        err = ext4_device_unregister(vmnt->disk()->name().c_str());
+        if (err) {
+            LOG_ERROR("Unable to unregister device errno %i", err);
+            return -err;
+        }
         err = ext4::internal::remove_volume(vmnt->block_dev());
         if (err) {
             LOG_ERROR("Remove volume error %i", err);
@@ -224,7 +231,7 @@ namespace purefs::fs::drivers
             return -EIO;
         }
         ext4_locker _lck(vmnt);
-        ext4_mount_stats estats;
+        ext4_mount_stats estats{};
         auto err = ext4_mount_point_stats(vmnt->mount_path().c_str(), &estats);
         if (err) {
             LOG_ERROR("Mount point stats error %i", err);
@@ -307,14 +314,13 @@ namespace purefs::fs::drivers
         if (err) {
             return -err;
         }
-        auto rpos = ext4_ftell(vfile->filp());
-        return rpos;
+        return ext4_ftell(vfile->filp());
     }
 
     auto filesystem_ext4::stat(const char *mount_point, const char *path, struct stat *st, bool ro) noexcept -> int
     {
         uint32_t inonum;
-        ext4_inode ino;
+        ext4_inode ino{};
         ext4_sblock *sb;
         auto err = ext4_raw_inode_fill(path, &inonum, &ino);
         if (err) {
@@ -394,7 +400,7 @@ namespace purefs::fs::drivers
             mnt,
             [](const char *path) {
                 if (ext4_inode_exist(path, EXT4_DE_DIR) == 0) {
-                    LOG_WARN("rmdir syscall instead of unlink is recommended for remove directory");
+                    LOG_WARN("rmdir syscall instead of unlink is recommended to remove directory");
                     return -ext4_dir_rm(path);
                 }
                 else {
@@ -484,7 +490,7 @@ namespace purefs::fs::drivers
             LOG_ERROR("Non ext4 filesystem file pointer");
             return -EBADF;
         }
-        return invoke_efs(vfile->mntpoint(), ::ext4_mode_set, vfile->open_path().c_str(), mode);
+        return invoke_efs(vfile->mntpoint(), ::ext4_mode_set, vfile->open_path(), mode);
     }
 
     auto filesystem_ext4::ftruncate(fsfile zfile, off_t len) noexcept -> int
@@ -524,7 +530,6 @@ namespace purefs::fs::drivers
             LOG_ERROR("Non ext4 filesystem file pointer");
             return -EBADF;
         }
-        return invoke_efs(vfile->mntpoint(), ::ext4_cache_flush, vfile->mntpoint()->mount_path().c_str());
+        return invoke_efs(vfile->mntpoint(), ::ext4_cache_flush, vfile->mntpoint()->mount_path());
     }
-
 } // namespace purefs::fs::drivers
