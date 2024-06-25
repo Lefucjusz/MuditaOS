@@ -88,6 +88,7 @@ namespace bsp::battery_charger
     void setMaxBusCurrent(USBCurrentLimit limit);
 
     std::optional<int> getVoltageFilteredMeasurement();
+    std::optional<int> getAvgCurrent();
     std::optional<MaxMinVolt> getMaxMinVolt();
 
     void printFuelGaugeInfo();

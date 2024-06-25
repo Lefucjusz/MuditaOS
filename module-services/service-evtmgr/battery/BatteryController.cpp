@@ -15,6 +15,7 @@
 #include <module-utils/EventStore/EventStore.hpp>
 #include <log/log.hpp>
 #include <magic_enum.hpp>
+#include <sstream>
 
 using sevm::battery::BatteryController;
 
@@ -140,6 +141,10 @@ BatteryController::BatteryController(sys::Service *service, xQueueHandle notific
     LOG_INFO("Initial charger state: %s", magic_enum::enum_name(Store::Battery::get().state).data());
     LOG_INFO("Initial battery SOC: %d", Store::Battery::get().level);
     LOG_INFO("Initial battery voltage: %" PRIu32 "mV", getVoltage());
+    const auto &current = getCurrent();
+    if (current.has_value()) {
+        LOG_INFO("Initial battery current: %" PRIi32 "mA", current.value());
+    }
     LOG_INFO("Initial battery state: %s", magic_enum::enum_name(Store::Battery::get().levelState).data());
     LOG_INFO("Initial battery temperature range: %s", magic_enum::enum_name(Store::Battery::get().temperature).data());
 }
@@ -169,12 +174,18 @@ void sevm::battery::BatteryController::poll()
 
 void sevm::battery::BatteryController::printCurrentState()
 {
-    LOG_INFO("Charger state: %s | Battery SOC: %d%% | Voltage: %" PRIu32 "mV | Level state: %s | Temperature: %s",
-             magic_enum::enum_name(Store::Battery::get().state).data(),
-             Store::Battery::get().level,
-             getVoltage(),
-             magic_enum::enum_name(Store::Battery::get().levelState).data(),
-             magic_enum::enum_name(Store::Battery::get().temperature).data());
+    std::stringstream ss;
+    ss << "Charger state: " << magic_enum::enum_name(Store::Battery::get().state).data() << " | ";
+    ss << "Battery SOC: " << Store::Battery::get().level << "% | ";
+    ss << "Voltage: " << getVoltage() << "mV | ";
+    const auto &current = getCurrent();
+    if (current.has_value()) {
+        ss << "Current: " << current.value() << "mA | ";
+    }
+    ss << "Level state: " << magic_enum::enum_name(Store::Battery::get().levelState).data() << " | ";
+    ss << "Temperature: " << magic_enum::enum_name(Store::Battery::get().temperature).data();
+
+    LOG_INFO("%s", ss.str().c_str());
 }
 
 void sevm::battery::BatteryController::update()
@@ -224,11 +235,16 @@ void sevm::battery::BatteryController::updateSoc()
 units::Voltage sevm::battery::BatteryController::getVoltage()
 {
     const auto voltage = charger->getBatteryVoltage();
-    if (voltage) {
-        return *voltage;
+    if (voltage.has_value()) {
+        return voltage.value();
     }
-    LOG_ERROR("Can't get the voltage");
+    LOG_ERROR("Failed to get voltage value");
     return 0;
+}
+
+std::optional<units::Current> sevm::battery::BatteryController::getCurrent()
+{
+    return charger->getCurrent();
 }
 
 void sevm::battery::BatteryController::checkChargerPresence()

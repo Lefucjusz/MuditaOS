@@ -74,13 +74,14 @@ namespace hal::battery
         using BatteryWorkerQueue = WorkerQueue<IrqEvents>;
 
         explicit BellBatteryCharger(xQueueHandle irqQueueHandle);
-        ~BellBatteryCharger();
+        ~BellBatteryCharger() override;
 
-        std::optional<Voltage> getBatteryVoltage() const final;
-        std::optional<SOC> getSOC() const final;
-        ChargingStatus getChargingStatus() const final;
-        ChargerPresence getChargerPresence() const final;
-        TemperatureState getTemperatureState() const final;
+        [[nodiscard]] std::optional<Voltage> getBatteryVoltage() const final;
+        [[nodiscard]] std::optional<SOC> getSOC() const final;
+        [[nodiscard]] std::optional<Current> getCurrent() const final;
+        [[nodiscard]] ChargingStatus getChargingStatus() const final;
+        [[nodiscard]] ChargerPresence getChargerPresence() const final;
+        [[nodiscard]] TemperatureState getTemperatureState() const final;
 
         static BatteryWorkerQueue &getWorkerQueueHandle();
 
@@ -126,7 +127,7 @@ namespace hal::battery
     {
 
         reinit_timer = xTimerCreate("reinit_timer", reinit_poll_time, pdFALSE, this, [](TimerHandle_t xTimer) {
-            BellBatteryCharger *inst = static_cast<BellBatteryCharger *>(pvTimerGetTimerID(xTimer));
+            auto inst = static_cast<BellBatteryCharger *>(pvTimerGetTimerID(xTimer));
             inst->fuel_gauge.reinit();
             inst->pollFuelGauge();
         });
@@ -159,6 +160,11 @@ namespace hal::battery
     std::optional<AbstractBatteryCharger::Voltage> BellBatteryCharger::getBatteryVoltage() const
     {
         return attemptToGetData(&bsp::devices::power::CW2015::get_battery_voltage, fuel_gauge);
+    }
+
+    std::optional<AbstractBatteryCharger::Current> BellBatteryCharger::getCurrent() const
+    {
+        return std::nullopt; // Harmony hardware doesn't provide current measurement
     }
 
     std::optional<AbstractBatteryCharger::SOC> BellBatteryCharger::getSOC() const
