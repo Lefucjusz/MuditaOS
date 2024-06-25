@@ -34,21 +34,23 @@ namespace hal::battery
     {
       public:
         explicit BatteryCharger(xQueueHandle irqQueueHandle);
-        ~BatteryCharger();
+        ~BatteryCharger() override;
 
-        std::optional<Voltage> getBatteryVoltage() const final;
-        std::optional<SOC> getSOC() const final;
-        ChargingStatus getChargingStatus() const final;
-        ChargerPresence getChargerPresence() const final;
-        TemperatureState getTemperatureState() const final;
+        [[nodiscard]] std::optional<Voltage> getBatteryVoltage() const final;
+        [[nodiscard]] std::optional<SOC> getSOC() const final;
+        [[nodiscard]] std::optional<Current> getCurrent() const final;
+        [[nodiscard]] ChargingStatus getChargingStatus() const final;
+        [[nodiscard]] ChargerPresence getChargerPresence() const final;
+        [[nodiscard]] TemperatureState getTemperatureState() const final;
 
       private:
         void worker();
 
         xQueueHandle notificationChannel = nullptr;
         TaskHandle_t batteryWorkerHandle = nullptr;
-        unsigned batteryLevel            = 100;
-        unsigned batteryVoltageLevel     = 3700;
+        std::uint8_t batteryLevel            = 100;
+        std::uint32_t batteryVoltageLevel     = 3700;
+        std::int32_t batteryCurrent = 0;
         bool isPlugged                   = false;
         bool shouldRun                   = true;
     };
@@ -59,7 +61,7 @@ namespace hal::battery
 
         xTaskCreate(
             [](void *pvp) {
-                BatteryCharger *inst = static_cast<BatteryCharger *>(pvp);
+                auto inst = static_cast<BatteryCharger *>(pvp);
                 inst->worker();
             },
             "battery",
@@ -84,6 +86,11 @@ namespace hal::battery
     std::optional<AbstractBatteryCharger::SOC> BatteryCharger::getSOC() const
     {
         return batteryLevel;
+    }
+
+    std::optional<AbstractBatteryCharger::Current> BatteryCharger::getCurrent() const
+    {
+        return batteryCurrent;
     }
 
     AbstractBatteryCharger::ChargingStatus BatteryCharger::getChargingStatus() const

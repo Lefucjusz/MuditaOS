@@ -94,19 +94,20 @@ namespace hal::battery
                 ControllerINTB,
                 USBChargerAttached
             };
-            Type type;
+            Type type{};
             std::uint8_t chargerType{};
         };
         using BatteryWorkerQueue = WorkerQueue<IrqEvents>;
 
         explicit PureBatteryCharger(xQueueHandle irqQueueHandle);
-        ~PureBatteryCharger();
+        ~PureBatteryCharger() override;
 
-        std::optional<Voltage> getBatteryVoltage() const final;
-        std::optional<SOC> getSOC() const final;
-        ChargingStatus getChargingStatus() const final;
-        ChargerPresence getChargerPresence() const final;
-        TemperatureState getTemperatureState() const final;
+        [[nodiscard]] std::optional<Voltage> getBatteryVoltage() const final;
+        [[nodiscard]] std::optional<SOC> getSOC() const final;
+        [[nodiscard]] std::optional<Current> getCurrent() const final;
+        [[nodiscard]] ChargingStatus getChargingStatus() const final;
+        [[nodiscard]] ChargerPresence getChargerPresence() const final;
+        [[nodiscard]] TemperatureState getTemperatureState() const final;
 
         static BatteryWorkerQueue &getWorkerQueueHandle();
 
@@ -203,6 +204,11 @@ namespace hal::battery
             return std::nullopt;
         }
         return scaledSoc;
+    }
+
+    std::optional<AbstractBatteryCharger::Current> PureBatteryCharger::getCurrent() const
+    {
+        return bsp::battery_charger::getAvgCurrent();
     }
 
     AbstractBatteryCharger::TemperatureState PureBatteryCharger::getTemperatureState() const

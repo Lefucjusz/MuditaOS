@@ -36,6 +36,7 @@ namespace sevm::battery
         void sendChargingNotification(const Store::Battery::State &lastState,
                                       const Store::Battery::State &currentState);
         units::Voltage getVoltage();
+        std::optional<units::Current> getCurrent();
 
         sys::Service *service{nullptr};
         std::unique_ptr<hal::battery::AbstractBatteryCharger> charger;
