@@ -19,32 +19,25 @@ namespace gui::window::name
     inline constexpr auto relaxationError           = "RelaxationError";
 
 } // namespace gui::window::name
+
 namespace app
 {
     namespace relaxation
     {
         class RelaxationPlayer;
     }
+
     inline constexpr auto applicationBellRelaxationName = "ApplicationBellRelaxation";
 
     class ApplicationBellRelaxation : public Application
     {
-      private:
-        std::unique_ptr<AbstractAudioModel> audioModel;
-        std::unique_ptr<AbstractBatteryModel> batteryModel;
-        std::unique_ptr<relaxation::RelaxationPlayer> player;
-        sys::TimerHandle relaxationRebuildTimerHandle{};
-
-        void onStop() override;
-        sys::MessagePointer handleSwitchWindow(sys::Message *msgl) override;
-
       public:
-        ApplicationBellRelaxation(std::string name                    = applicationBellRelaxationName,
-                                  std::string parent                  = "",
-                                  StatusIndicators statusIndicators   = StatusIndicators{},
-                                  StartInBackground startInBackground = {false},
-                                  uint32_t stackDepth                 = 4096 * 2);
-        ~ApplicationBellRelaxation();
+        explicit ApplicationBellRelaxation(std::string name                    = applicationBellRelaxationName,
+                                           std::string parent                  = "",
+                                           StatusIndicators statusIndicators   = StatusIndicators{},
+                                           StartInBackground startInBackground = {false},
+                                           std::uint32_t stackDepth            = 1024 * 8);
+        ~ApplicationBellRelaxation() override;
         sys::ReturnCodes InitHandler() override;
 
         void createUserInterface() override;
@@ -57,6 +50,15 @@ namespace app
         {
             return sys::ReturnCodes::Success;
         }
+
+      private:
+        std::unique_ptr<AbstractAudioModel> audioModel;
+        std::unique_ptr<AbstractBatteryModel> batteryModel;
+        std::unique_ptr<relaxation::RelaxationPlayer> player;
+        sys::TimerHandle relaxationRebuildTimerHandle{};
+
+        void onStop() override;
+        sys::MessagePointer handleSwitchWindow(sys::Message *msgl) override;
     };
 
     template <>

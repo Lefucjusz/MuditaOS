@@ -129,6 +129,7 @@ namespace app::home_screen
         getView()->setSnoozeFormat(timeModel.getTimeFormat());
         getView()->setTemperature(temperatureModel.getTemperature());
     }
+
     void HomeScreenPresenter::createData()
     {
         stateController =
@@ -139,12 +140,14 @@ namespace app::home_screen
     {
         app->refreshWindow(gui::RefreshModes::GUI_REFRESH_FAST);
     }
+
     void HomeScreenPresenter::onDatabaseMessage(db::NotificationMessage *msg)
     {
         if (msg->interface == db::Interface::Name::AlarmEvents && msg->type == db::Query::Type::Update) {
             alarmModel.update();
         }
     }
+
     void HomeScreenPresenter::handleAlarmModelReady()
     {
         getView()->setAlarmTime(alarmModel.getAlarmTime());
@@ -252,7 +255,7 @@ namespace app::home_screen
 
     UTF8 HomeScreenPresenter::getGreeting()
     {
-        const auto greetingCollection = utils::translate_array("app_bell_greeting_msg");
+        const auto &greetingCollection = utils::translate_array("app_bell_greeting_msg");
         if (greetingCollection.empty()) {
             LOG_WARN("Array 'app_bell_greeting_msg' does not exist, using default string");
             return "app_bell_greeting_msg";
@@ -266,5 +269,4 @@ namespace app::home_screen
     {
         getView()->setUSBStatusConnected();
     }
-
 } // namespace app::home_screen

@@ -30,13 +30,12 @@
 
 namespace app
 {
-
     ApplicationBellMain::ApplicationBellMain(std::string name,
                                              std::string parent,
                                              StatusIndicators statusIndicators,
                                              StartInBackground startInBackground,
                                              std::uint32_t stackDepth)
-        : Application(name, parent, statusIndicators, startInBackground, stackDepth)
+        : Application(std::move(name), std::move(parent), statusIndicators, startInBackground, stackDepth)
     {
         getPopupFilter().addAppDependentFilter([&](const gui::PopupRequestParams &params) {
             const auto popupId = params.getPopupId();
@@ -185,7 +184,7 @@ namespace app
 
     sys::MessagePointer ApplicationBellMain::handleSwitchWindow(sys::Message *msgl)
     {
-        auto msg = static_cast<AppSwitchWindowMessage *>(msgl);
+        auto msg = dynamic_cast<AppSwitchWindowMessage *>(msgl);
         if (msg != nullptr) {
             const auto newWindowName = msg->getWindowName();
             if (newWindowName == gui::name::window::main_window) {
@@ -201,7 +200,7 @@ namespace app
         return ApplicationCommon::handleSwitchWindow(msgl);
     }
 
-    bool ApplicationBellMain::setHomeScreenLayout(std::string layoutName)
+    bool ApplicationBellMain::setHomeScreenLayout(const std::string &layoutName)
     {
         auto homeScreenLayoutsList = gui::factory::getAllLayouts();
         if (homeScreenLayoutsList.find(layoutName) == homeScreenLayoutsList.end()) {

@@ -58,18 +58,18 @@ namespace service
     class AudioSettingsMessage : public AudioMessage
     {
       public:
-        AudioSettingsMessage(const audio::PlaybackType &playbackType, const std::string &val = {})
-            : AudioMessage{}, playbackType{playbackType}, val{val}
+        explicit AudioSettingsMessage(const audio::PlaybackType &playbackType, const std::string &value = {})
+            : AudioMessage{}, playbackType{playbackType}, value{value}
         {}
 
         audio::PlaybackType playbackType = audio::PlaybackType::None;
-        std::string val{};
+        std::string value{};
     };
 
     class AudioGetVolume : public AudioSettingsMessage
     {
       public:
-        AudioGetVolume(const audio::PlaybackType &playbackType) : AudioSettingsMessage{playbackType}
+        explicit AudioGetVolume(const audio::PlaybackType &playbackType) : AudioSettingsMessage{playbackType}
         {}
     };
 

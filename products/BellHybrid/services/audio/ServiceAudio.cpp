@@ -87,7 +87,7 @@ namespace service
 
         connect(typeid(AudioSetVolume), [this](sys::Message *msg) -> sys::MessagePointer {
             auto *msgl = static_cast<AudioSetVolume *>(msg);
-            return handleSetVolume(msgl->playbackType, msgl->val);
+            return handleSetVolume(msgl->playbackType, msgl->value);
         });
 
         connect(typeid(AudioGetVolume), [this](sys::Message *msg) -> sys::MessagePointer {

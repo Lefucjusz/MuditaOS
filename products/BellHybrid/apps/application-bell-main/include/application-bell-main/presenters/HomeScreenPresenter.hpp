@@ -50,7 +50,7 @@ namespace app::home_screen
 
         /// Alarm widget related API
         virtual void setViewState(ViewState state)                           = 0;
-        virtual std::time_t getAlarmTime() const                             = 0;
+        [[nodiscard]] virtual std::time_t getAlarmTime() const               = 0;
         virtual void setAlarmTime(std::time_t time)                          = 0;
         virtual void setAlarmTimeFormat(utils::time::Locale::TimeFormat fmt) = 0;
         virtual void setSnoozeFormat(utils::time::Locale::TimeFormat fmt)    = 0;
@@ -89,9 +89,9 @@ namespace app::home_screen
         virtual void startSnoozeTimer(std::chrono::seconds snoozeDuration)                       = 0;
         virtual void stopSnoozeTimer()                                                           = 0;
         virtual void restartSnoozeTimer(std::chrono::seconds snoozeDuration)                     = 0;
-        virtual std::uint32_t getBatteryLvl() const                                              = 0;
-        virtual bool isBatteryCharging() const                                                   = 0;
-        virtual bool isAlarmActivatedByLatch() const                                             = 0;
+        [[nodiscard]] virtual std::uint32_t getBatteryLvl() const                                              = 0;
+        [[nodiscard]] virtual bool isBatteryCharging() const                                                   = 0;
+        [[nodiscard]] virtual bool isAlarmActivatedByLatch() const                                             = 0;
         virtual void setLayout(gui::LayoutGenerator layoutGenerator)                             = 0;
         virtual void incAlarmMinute()                                                            = 0;
         virtual void decAlarmMinute()                                                            = 0;
@@ -111,7 +111,7 @@ namespace app::home_screen
                             AbstractBatteryModel &batteryModel,
                             AbstractTemperatureModel &temperatureModel,
                             AbstractTimeModel &timeModel);
-        virtual ~HomeScreenPresenter();
+        ~HomeScreenPresenter() override;
         HomeScreenPresenter()        = delete;
         HomeScreenPresenter &operator=(const HomeScreenPresenter &oth) = delete;
         HomeScreenPresenter &operator=(HomeScreenPresenter &&oth) = delete;
@@ -135,16 +135,16 @@ namespace app::home_screen
         void startSnoozeTimer(std::chrono::seconds snoozeDuration) override;
         void stopSnoozeTimer() override;
         void restartSnoozeTimer(std::chrono::seconds snoozeDuration) override;
-        std::uint32_t getBatteryLvl() const override;
-        bool isBatteryCharging() const override;
-        bool isAlarmActivatedByLatch() const override;
+        [[nodiscard]] std::uint32_t getBatteryLvl() const override;
+        [[nodiscard]] bool isBatteryCharging() const override;
+        [[nodiscard]] bool isAlarmActivatedByLatch() const override;
         void setUSBStatusConnected() override;
 
-        void incAlarmMinute();
-        void decAlarmMinute();
-        void switchToMenu();
-        void switchToBatteryStatus();
-        UTF8 getGreeting();
+        void incAlarmMinute() override;
+        void decAlarmMinute() override;
+        void switchToMenu() override;
+        void switchToBatteryStatus() override;
+        UTF8 getGreeting() override;
 
         void setLayout(gui::LayoutGenerator layoutGenerator) override;
 
