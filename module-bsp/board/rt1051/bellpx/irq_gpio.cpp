@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2023, Mudita Sp. z.o.o. All rights reserved.
+// Copyright (c) 2017-2024, Mudita Sp. z.o.o. All rights reserved.
 // For licensing, see https://github.com/mudita/MuditaOS/LICENSE.md
 
 #include "board/irq_gpio.hpp"
@@ -11,7 +11,7 @@
 #include <fsl_pmu.h>
 #include <fsl_rtwdog.h>
 
-#include "board/rt1051/bsp/eink/bsp_eink.h"
+#include "board/rt1051/bsp/eink/BspEink.hpp"
 #include <hal/key_input/KeyInput.hpp>
 #include <hal/battery_charger/BatteryChargerIRQ.hpp>
 #include "board/BoardDefinitions.hpp"
@@ -148,7 +148,7 @@ namespace bsp
             uint32_t irq_mask                   = GPIO_GetPinsInterruptFlags(GPIO3);
 
             if (irq_mask & (1 << BOARD_EINK_BUSY_GPIO_PIN)) {
-                xHigherPriorityTaskWoken |= BSP_EinkBusyPinStateChangeHandler();
+                xHigherPriorityTaskWoken |= bsp::eink::busyPinStateChangeHandler();
             }
 
             // Clear all IRQs on the GPIO3 port
