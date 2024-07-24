@@ -151,7 +151,7 @@ namespace service::detail
             return;
         }
 
-        const auto &extension = utils::stringToLowercase(std::filesystem::path(path).extension());
+        const auto &extension = std::filesystem::path(path).extension();
         if (!isExtensionSupported(extension)) {
             LOG_WARN("Unsupported extension '%s'", extension.c_str());
             return;
@@ -175,7 +175,7 @@ namespace service::detail
             return;
         }
 
-        const auto &extension = utils::stringToLowercase(std::filesystem::path(path).extension());
+        const auto &extension = std::filesystem::path(path).extension();
         if (!isExtensionSupported(extension)) {
             LOG_WARN("Unsupported extension '%s'", extension.c_str());
             return;

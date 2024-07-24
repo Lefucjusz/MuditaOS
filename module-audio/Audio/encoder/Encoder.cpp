@@ -35,10 +35,9 @@ namespace audio
 
     std::unique_ptr<Encoder> Encoder::Create(const std::string &filePath, const Format &frmt)
     {
-        const auto extension          = std::filesystem::path(filePath).extension();
-        const auto extensionLowercase = utils::stringToLowercase(extension);
-
         std::unique_ptr<Encoder> enc;
+
+        const auto extensionLowercase = utils::stringToLowercase(std::filesystem::path(filePath).extension());
         if (extensionLowercase == ".wav") {
             enc = std::make_unique<EncoderWAV>(filePath, frmt);
         }
@@ -52,5 +51,4 @@ namespace audio
 
         return nullptr;
     }
-
 } // namespace audio

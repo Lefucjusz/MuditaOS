@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <Utils.hpp>
+
 #include <array>
 #include <algorithm>
 #include <filesystem>
@@ -23,12 +25,12 @@ namespace service::detail
         }
 
         return std::any_of(allowedExtensions.begin(), allowedExtensions.end(), [&path](const auto &extension) {
-            if (path.has_extension() && path.extension() == extension) {
-                return true;
+            if (path.has_extension()) {
+                return utils::stringToLowercase(path.extension()) == extension;
             }
 
             /* If empty string with extension only */
-            return (path == extension);
+            return utils::stringToLowercase(path) == extension;
         });
     }
 } // namespace service::detail

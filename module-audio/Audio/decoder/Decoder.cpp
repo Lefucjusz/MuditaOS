@@ -49,11 +49,9 @@ namespace audio
 
     std::unique_ptr<Decoder> Decoder::Create(const std::string &filePath)
     {
-        const auto extension          = std::filesystem::path(filePath).extension();
-        const auto extensionLowercase = utils::stringToLowercase(extension);
-
         std::unique_ptr<Decoder> dec;
 
+        const auto &extensionLowercase = utils::stringToLowercase(std::filesystem::path(filePath).extension());
         if (extensionLowercase == ".wav") {
             dec = std::make_unique<decoderWAV>(filePath);
         }
