@@ -22,7 +22,8 @@ using sevm::battery::BatteryController;
 namespace
 {
     using hal::battery::AbstractBatteryCharger;
-    Store::Battery::State transformChargingState(AbstractBatteryCharger::ChargingStatus status)
+
+    constexpr Store::Battery::State transformChargingState(AbstractBatteryCharger::ChargingStatus status)
     {
         using Status   = AbstractBatteryCharger::ChargingStatus;
         using NewState = Store::Battery::State;
@@ -40,7 +41,7 @@ namespace
         }
     }
 
-    BatteryState::ChargingState transformChargingState(Store::Battery::State status)
+    constexpr BatteryState::ChargingState transformChargingState(Store::Battery::State status)
     {
         using Status   = Store::Battery::State;
         using NewState = BatteryState::ChargingState;
@@ -58,7 +59,7 @@ namespace
         }
     }
 
-    Store::Battery::LevelState transformBatteryState(BatteryState::State status)
+    constexpr Store::Battery::LevelState transformBatteryState(BatteryState::State status)
     {
         using Status   = BatteryState::State;
         using NewState = Store::Battery::LevelState;
@@ -76,7 +77,7 @@ namespace
         }
     }
 
-    Store::Battery::Temperature transformTemperatureState(AbstractBatteryCharger::TemperatureState state)
+    constexpr Store::Battery::Temperature transformTemperatureState(AbstractBatteryCharger::TemperatureState state)
     {
         using State    = AbstractBatteryCharger::TemperatureState;
         using NewState = Store::Battery::Temperature;
@@ -92,12 +93,12 @@ namespace
         }
     }
 
-    bool isProperLastState(Store::Battery::State state)
+    constexpr bool isProperLastState(Store::Battery::State state)
     {
         return (state == Store::Battery::State::Discharging) || (state == Store::Battery::State::PluggedNotCharging);
     }
 
-    bool isProperCurrentState(Store::Battery::State state)
+    constexpr bool isProperCurrentState(Store::Battery::State state)
     {
         return (state == Store::Battery::State::Charging) || (state == Store::Battery::State::ChargingDone);
     }
@@ -153,10 +154,11 @@ void sevm::battery::BatteryController::handleNotification(Events evt)
 {
     LOG_INFO("Incoming event: %s", magic_enum::enum_name(evt).data());
     switch (evt) {
-    case Events::Charger:
+    case Events::VBUSDetection:
         checkChargerPresence();
         update();
         break;
+    case Events::Charger:
     case Events::SOC:
         update();
         break;
@@ -227,7 +229,7 @@ void sevm::battery::BatteryController::update()
 void sevm::battery::BatteryController::updateSoc()
 {
     const auto batteryLevel = charger->getSOC();
-    if (batteryLevel) {
+    if (batteryLevel.has_value()) {
         Store::Battery::modify().level = batteryLevel.value();
     }
 }
@@ -255,11 +257,10 @@ void sevm::battery::BatteryController::checkChargerPresence()
     if (chargerPresence == newChargerPresence) {
         return;
     }
-
-    const auto plugEvent =
-        (newChargerPresence == ChargerPresence::PluggedIn) ? PlugEvent::CablePlugged : PlugEvent::CableUnplugged;
-    service->bus.sendUnicast(std::make_shared<sevm::USBPlugEvent>(plugEvent), service::name::service_desktop);
     chargerPresence = newChargerPresence;
+
+    const auto plugEvent = (newChargerPresence == ChargerPresence::PluggedIn) ? PlugEvent::CablePlugged : PlugEvent::CableUnplugged;
+    service->bus.sendUnicast(std::make_shared<sevm::USBPlugEvent>(plugEvent), service::name::service_desktop);
 }
 
 void sevm::battery::BatteryController::sendChargingNotification(const Store::Battery::State &lastState,

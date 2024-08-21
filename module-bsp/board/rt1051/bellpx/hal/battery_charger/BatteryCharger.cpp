@@ -266,15 +266,17 @@ namespace hal::battery
                               }},
                    event);
     }
+
     void BellBatteryCharger::handleChargerEvents(const MP2639B::ChargingStatus)
     {
-        sendNotification(Events::Charger);
+        sendNotification(Events::VBUSDetection);
     }
 
     BaseType_t charger_irq()
     {
         return BellBatteryCharger::getWorkerQueueHandle().post({BellBatteryCharger::events::Charger{}});
     }
+
     BaseType_t fuel_gauge_irq()
     {
         return BellBatteryCharger::getWorkerQueueHandle().post({BellBatteryCharger::events::FuelGauge{}});

@@ -305,6 +305,7 @@ void PINMUX_InitBootPins(void)
     PINMUX_InitLEDDRIVER();
     PINMUX_InitUSBC();
     PINMUX_InitBatteryCharger();
+    PINMUX_InitUSBProtector();
     PINMUX_InitALS();
     PINMUX_InitPowerSW();
     PINMUX_InitHeadset();
@@ -978,6 +979,8 @@ void PINMUX_InitPowerButton(void)
 
 void PINMUX_InitKeyboard(void)
 {
+    CLOCK_EnableClock(kCLOCK_Iomuxc);
+
     IOMUXC_SetPinMux(PINMUX_KEYBOARD_SCL, /* GPIO_AD_B1_00 is configured as LPI2C1_SCL */
                      1U);                 /* Software Input On Field: Force input path of pad PINMUX_KEYPINMUX_SCL */
 
@@ -1005,6 +1008,7 @@ void PINMUX_InitKeyboard(void)
 
 void PINMUX_InitAudioCodec(void)
 {
+    CLOCK_EnableClock(kCLOCK_Iomuxc);
 
     IOMUXC_SetPinMux(PINMUX_AUDIOCODEC_SAIx_MCLK, /* GPIO_AD_B1_09 is configured as SAI1_MCLK */
                      0U);
@@ -1031,7 +1035,7 @@ void PINMUX_InitAudioCodec(void)
 
 void PINMUX_InitEINK(void)
 {
-    CLOCK_EnableClock(kCLOCK_Iomuxc); /* iomuxc clock (iomuxc_clk_enable): 0x03u */
+    CLOCK_EnableClock(kCLOCK_Iomuxc);
 
     IOMUXC_SetPinMux(PINMUX_EINK_SCK,   /* GPIO_AD_B0_00 is configured as LPSPI1_SCK */
                      0U);               /* Software Input On Field: Input Path is determined by functionality */
@@ -1331,27 +1335,29 @@ void PINMUX_InitHeadset(void)
 
 void PINMUX_InitBatteryCharger(void)
 {
+    CLOCK_EnableClock(kCLOCK_Iomuxc);
+
     //#if PROJECT_CONFIG_IS_T1_BOARD == 1
-    IOMUXC_SetPinMux(PINUMX_BATTERY_CHARGER_INOKB_IRQ, /* GPIO_AD_B0_00 is configured as LPSPI1_SCK */
+    IOMUXC_SetPinMux(PINMUX_BATTERY_CHARGER_INOKB_IRQ, /* GPIO_AD_B0_00 is configured as LPSPI1_SCK */
                      0U); /* Software Input On Field: Input Path is determined by functionality */
 
-    IOMUXC_SetPinMux(PINUMX_BATTERY_CHARGER_WCINOKB_IRQ, /* GPIO_AD_B0_00 is configured as LPSPI1_SCK */
+    IOMUXC_SetPinMux(PINMUX_BATTERY_CHARGER_WCINOKB_IRQ, /* GPIO_AD_B0_00 is configured as LPSPI1_SCK */
                      0U);
 
-    IOMUXC_SetPinMux(PINUMX_BATTERY_CHARGER_INTB_IRQ, /* GPIO_AD_B0_00 is configured as LPSPI1_SCK */
+    IOMUXC_SetPinMux(PINMUX_BATTERY_CHARGER_INTB_IRQ, /* GPIO_AD_B0_00 is configured as LPSPI1_SCK */
                      0U);
 
-    IOMUXC_SetPinConfig(PINUMX_BATTERY_CHARGER_INOKB_IRQ,
+    IOMUXC_SetPinConfig(PINMUX_BATTERY_CHARGER_INOKB_IRQ,
 
                         PAD_CONFIG_SLEW_RATE_SLOW | PAD_CONFIG_DRIVER_DISABLED | PAD_CONFIG_SPEED_SLOW_50MHz |
                             PAD_CONFIG_PULL_KEEPER_ENABLED | PAD_CONFIG_SELECT_PULL | PAD_CONFIG_PULL_UP_100kOhm);
 
-    IOMUXC_SetPinConfig(PINUMX_BATTERY_CHARGER_WCINOKB_IRQ,
+    IOMUXC_SetPinConfig(PINMUX_BATTERY_CHARGER_WCINOKB_IRQ,
 
                         PAD_CONFIG_SLEW_RATE_SLOW | PAD_CONFIG_DRIVER_DISABLED | PAD_CONFIG_SPEED_SLOW_50MHz |
                             PAD_CONFIG_PULL_KEEPER_DISABLED | PAD_CONFIG_SELECT_PULL | PAD_CONFIG_PULL_UP_100kOhm);
 
-    IOMUXC_SetPinConfig(PINUMX_BATTERY_CHARGER_INTB_IRQ,
+    IOMUXC_SetPinConfig(PINMUX_BATTERY_CHARGER_INTB_IRQ,
 
                         PAD_CONFIG_SLEW_RATE_SLOW | PAD_CONFIG_DRIVER_DISABLED | PAD_CONFIG_SPEED_SLOW_50MHz |
                             PAD_CONFIG_PULL_KEEPER_ENABLED | PAD_CONFIG_SELECT_PULL | PAD_CONFIG_PULL_UP_100kOhm);
@@ -1359,9 +1365,20 @@ void PINMUX_InitBatteryCharger(void)
     //#endif
 }
 
+void PINMUX_InitUSBProtector(void)
+{
+    CLOCK_EnableClock(kCLOCK_Iomuxc);
+
+    IOMUXC_SetPinMux(PINMUX_USB_PROTECTOR_ACK_IRQ, 0U);
+
+    IOMUXC_SetPinConfig(PINMUX_USB_PROTECTOR_ACK_IRQ,
+                        PAD_CONFIG_SLEW_RATE_SLOW | PAD_CONFIG_DRIVER_DISABLED | PAD_CONFIG_SPEED_SLOW_50MHz |
+                            PAD_CONFIG_PULL_KEEPER_ENABLED | PAD_CONFIG_SELECT_PULL | PAD_CONFIG_PULL_UP_100kOhm);
+}
+
 void PINMUX_InitALS(void)
 {
-    CLOCK_EnableClock(kCLOCK_Iomuxc); /* iomuxc clock (iomuxc_clk_enable): 0x03u */
+    CLOCK_EnableClock(kCLOCK_Iomuxc);
 
     IOMUXC_SetPinMux(PINMUX_ALS_ADC, 0U);
 
@@ -1390,6 +1407,8 @@ void PINMUX_InitALS(void)
 
 void PINMUX_InitPowerSW(void)
 {
+    CLOCK_EnableClock(kCLOCK_Iomuxc);
+
     IOMUXC_SetPinMux(PINMUX_POWER_SW, 1U);
 
     IOMUXC_SetPinConfig(PINMUX_POWER_SW,
@@ -1409,7 +1428,10 @@ void PINMUX_InitPowerSW(void)
 
 void PINMUX_InitVibrator(void)
 {
+    CLOCK_EnableClock(kCLOCK_Iomuxc);
+
     IOMUXC_SetPinMux(PINMUX_VIBRATOR_PWM, 0U);
+
     IOMUXC_SetPinConfig(PINMUX_VIBRATOR_PWM,
                         PAD_CONFIG_SLEW_RATE_SLOW | PAD_CONFIG_DRIVER_STRENGTH_LVL_1 | PAD_CONFIG_SPEED_SLOW_50MHz |
                             PAD_CONFIG_PULL_KEEPER_ENABLED | PAD_CONFIG_SELECT_KEEPER | PAD_CONFIG_HYSTERESIS_DISABLED);
@@ -1417,7 +1439,10 @@ void PINMUX_InitVibrator(void)
 
 void PINMUX_InitTorch(void)
 {
+    CLOCK_EnableClock(kCLOCK_Iomuxc);
+
     IOMUXC_SetPinMux(PINMUX_TORCH_EN_PIN, 1U);
+
     IOMUXC_SetPinConfig(PINMUX_TORCH_EN_PIN,
                         PAD_CONFIG_SLEW_RATE_SLOW | PAD_CONFIG_DRIVER_STRENGTH_LVL_1 | PAD_CONFIG_SPEED_SLOW_50MHz |
                             PAD_CONFIG_PULL_KEEPER_ENABLED | PAD_CONFIG_SELECT_KEEPER | PAD_CONFIG_HYSTERESIS_DISABLED);
@@ -1425,16 +1450,21 @@ void PINMUX_InitTorch(void)
 
 void PINMUX_InitMagnetometer(void)
 {
-    IOMUXC_SetPinMux(PINMUX_MAGNETOMETER_IRQ_PIN, 0U);
-    IOMUXC_SetPinConfig(PINMUX_MAGNETOMETER_IRQ_PIN,
+    CLOCK_EnableClock(kCLOCK_Iomuxc);
 
+    IOMUXC_SetPinMux(PINMUX_MAGNETOMETER_IRQ_PIN, 0U);
+
+    IOMUXC_SetPinConfig(PINMUX_MAGNETOMETER_IRQ_PIN,
                         PAD_CONFIG_SLEW_RATE_SLOW | PAD_CONFIG_DRIVER_DISABLED | PAD_CONFIG_SPEED_SLOW_50MHz |
                             PAD_CONFIG_PULL_KEEPER_ENABLED | PAD_CONFIG_SELECT_PULL | PAD_CONFIG_PULL_UP_22kOhm);
 }
 
 void PINMUX_InitEinkFrontlight(void)
 {
+    CLOCK_EnableClock(kCLOCK_Iomuxc);
+
     IOMUXC_SetPinMux(PINMUX_EINK_FORNTLIGHT_PWM, 0U);
+
     IOMUXC_SetPinConfig(PINMUX_EINK_FORNTLIGHT_PWM,
                         PAD_CONFIG_SLEW_RATE_SLOW | PAD_CONFIG_OPEN_DRAIN_DISABLED | PAD_CONFIG_SPEED_MEDIUM_1_100MHz |
                             PAD_CONFIG_PULL_KEEPER_ENABLED | PAD_CONFIG_SELECT_KEEPER | PAD_CONFIG_PULL_DOWN_100kOhm |
@@ -1443,7 +1473,10 @@ void PINMUX_InitEinkFrontlight(void)
 
 void PINMUX_InitLightSensor(void)
 {
+    CLOCK_EnableClock(kCLOCK_Iomuxc);
+
     IOMUXC_SetPinMux(PINMUX_LIGHT_SENSOR_IRQ_PIN, 0U);
+
     IOMUXC_SetPinConfig(PINMUX_LIGHT_SENSOR_IRQ_PIN,
                         PAD_CONFIG_SLEW_RATE_SLOW | PAD_CONFIG_DRIVER_DISABLED | PAD_CONFIG_SPEED_SLOW_50MHz |
                             PAD_CONFIG_PULL_KEEPER_ENABLED | PAD_CONFIG_SELECT_PULL | PAD_CONFIG_PULL_UP_22kOhm);

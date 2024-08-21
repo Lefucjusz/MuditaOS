@@ -53,6 +53,9 @@ namespace bsp::battery_charger
         constexpr std::uint16_t temperatureConversionGain{0xEE56};
         constexpr std::uint16_t temperatureConversionOffset{0x1DA4};
 
+        // Time for charger to settle down after setting configuration
+        constexpr auto chargerSyncTimeMs = 100;
+
         namespace fuel_gauge_params
         {
             /// Parameters calculated in in MAXIM EVKIT software
@@ -132,7 +135,8 @@ namespace bsp::battery_charger
             {TemperatureRanges::Hot, {45, std::numeric_limits<std::int8_t>::max(), 45, maxAlertDisabled}}};
 
         std::shared_ptr<drivers::DriverI2C> i2c;
-        std::shared_ptr<drivers::DriverGPIO> gpio;
+        std::shared_ptr<drivers::DriverGPIO> chargerGpio;
+        std::shared_ptr<drivers::DriverGPIO> protectorGpio;
 
         drivers::I2CAddress fuelGaugeAddress      = {FUEL_GAUGE_I2C_ADDR, 0, i2cSubaddressSize};
         drivers::I2CAddress batteryChargerAddress = {BATTERY_CHARGER_I2C_ADDR, 0, i2cSubaddressSize};
@@ -624,8 +628,7 @@ namespace bsp::battery_charger
 
         BatteryRetval enableChargerIRQs()
         {
-            const std::uint8_t mask =
-                ~(static_cast<std::uint8_t>(CHG_MASK::CHG_M) | static_cast<std::uint8_t>(CHG_MASK::CHGIN_M));
+            const std::uint8_t mask = ~(static_cast<std::uint8_t>(CHG_MASK::CHG_M));
 
             if (chargerWrite(Registers::CHG_INT_MASK, mask) != kStatus_Success) {
                 LOG_ERROR("Failed to enable charger IRQs");
@@ -634,20 +637,29 @@ namespace bsp::battery_charger
             return BatteryRetval::OK;
         }
 
-        void IRQPinsInit()
+        void initIRQPins()
         {
-            gpio =
-                drivers::DriverGPIO::Create(static_cast<drivers::GPIOInstances>(BoardDefinitions::BATTERY_CHARGER_GPIO),
-                                            drivers::DriverGPIOParams{});
+            /* Initialize MAX77818's INTB pin IRQ */
+            const drivers::DriverGPIOPinParams INTBPinConfig = {
+                .dir      = drivers::DriverGPIOPinParams::Direction::Input,
+                .irqMode  = drivers::DriverGPIOPinParams::InterruptMode::IntFallingEdge,
+                .defLogic = 0,
+                .pin      = static_cast<std::uint32_t>(BoardDefinitions::BATTERY_CHARGER_INTB_PIN)
+            };
+            chargerGpio = drivers::DriverGPIO::Create(static_cast<drivers::GPIOInstances>(BoardDefinitions::BATTERY_CHARGER_GPIO), drivers::DriverGPIOParams{});
+            chargerGpio->ConfPin(INTBPinConfig);
+            chargerGpio->EnableInterrupt(1 << static_cast<std::uint32_t>(BoardDefinitions::BATTERY_CHARGER_INTB_PIN));
 
-            drivers::DriverGPIOPinParams INTBPinConfig{};
-            INTBPinConfig.dir      = drivers::DriverGPIOPinParams::Direction::Input;
-            INTBPinConfig.irqMode  = drivers::DriverGPIOPinParams::InterruptMode::IntFallingEdge;
-            INTBPinConfig.defLogic = 0;
-            INTBPinConfig.pin      = static_cast<std::uint32_t>(BoardDefinitions::BATTERY_CHARGER_INTB_PIN);
-            gpio->ConfPin(INTBPinConfig);
-
-            gpio->EnableInterrupt(1 << static_cast<std::uint32_t>(BoardDefinitions::BATTERY_CHARGER_INTB_PIN));
+            /* Initialize USB protector ~ACK pin IRQ */
+            const drivers::DriverGPIOPinParams USBAckPinConfig = {
+                .dir      = drivers::DriverGPIOPinParams::Direction::Input,
+                .irqMode  = drivers::DriverGPIOPinParams::InterruptMode::IntRisingOrFallingEdge,
+                .defLogic = 0,
+                .pin      = static_cast<std::uint32_t>(BoardDefinitions::USB_PROTECTOR_ACK_PIN)
+            };
+            protectorGpio = drivers::DriverGPIO::Create(static_cast<drivers::GPIOInstances>(BoardDefinitions::USB_PROTECTOR_GPIO), drivers::DriverGPIOParams{});
+            protectorGpio->ConfPin(USBAckPinConfig);
+            protectorGpio->EnableInterrupt(1 << static_cast<std::uint32_t>(BoardDefinitions::USB_PROTECTOR_ACK_PIN));
         }
 
         std::optional<int> getCellTemperature()
@@ -735,13 +747,13 @@ namespace bsp::battery_charger
         checkTemperatureRange();
 
         // Short time to synchronize after configuration
-        vTaskDelay(pdMS_TO_TICKS(100));
+        vTaskDelay(pdMS_TO_TICKS(chargerSyncTimeMs));
 
         clearAllChargerIRQs();
-        clearFuelGaugeIRQ(static_cast<std::uint16_t>(BatteryINTBSource::all));
+        clearFuelGaugeIRQ(static_cast<std::uint16_t>(BatteryINTBSource::All));
         enableTopIRQs();
         enableChargerIRQs();
-        IRQPinsInit();
+        initIRQPins();
 
         return kStatus_Success;
     }
@@ -751,10 +763,12 @@ namespace bsp::battery_charger
         resetUSBCurrentLimit();
         storeConfiguration();
 
-        gpio->DisableInterrupt(1 << static_cast<std::uint32_t>(BoardDefinitions::BATTERY_CHARGER_INTB_PIN));
+        protectorGpio->DisableInterrupt(1 << static_cast<std::uint32_t>(BoardDefinitions::USB_PROTECTOR_ACK_PIN));
+        chargerGpio->DisableInterrupt(1 << static_cast<std::uint32_t>(BoardDefinitions::BATTERY_CHARGER_INTB_PIN));
 
         i2c.reset();
-        gpio.reset();
+        protectorGpio.reset();
+        chargerGpio.reset();
     }
 
     bool levelSocToStore(const units::SOC soc, std::uint16_t percentLevelDelta)
@@ -1018,11 +1032,6 @@ namespace bsp::battery_charger
 
     bool isChargerPlugged()
     {
-        const auto chargerStatus = chargerRead(Registers::CHG_INT_OK);
-        if (chargerStatus.first != kStatus_Success) {
-            LOG_ERROR("Failed to read charger status");
-            return false;
-        }
-        return isChargerInputValid(chargerStatus.second);
+        return (protectorGpio->ReadPin(static_cast<std::uint32_t>(BoardDefinitions::USB_PROTECTOR_ACK_PIN)) == 0);
     }
 } // namespace bsp::battery_charger

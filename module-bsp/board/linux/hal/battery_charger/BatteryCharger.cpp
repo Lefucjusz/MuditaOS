@@ -133,7 +133,7 @@ namespace hal::battery
                 switch (static_cast<char>(buff[0])) {
                 case chargerPlugStateChange:
                     isPlugged = !isPlugged;
-                    evt       = Events::Charger;
+                    evt       = Events::VBUSDetection;
                     break;
                 case batteryLevelUp:
                     batteryLevel++;

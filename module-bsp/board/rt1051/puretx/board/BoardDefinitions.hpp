@@ -14,12 +14,13 @@
 
 enum class BoardDefinitions
 {
-
     POWER_SWITCH_HOLD_GPIO   = static_cast<int>(drivers::GPIOInstances::GPIO_2),
     POWER_SWITCH_HOLD_BUTTON = 7,
 
+    USB_PROTECTOR_GPIO = static_cast<int>(drivers::GPIOInstances::GPIO_2),
+    USB_PROTECTOR_ACK_PIN = 3,  // GPIO_B0_03  Note: pull-up in order to read
+
     USB_FUNCTION_MUX_SELECT = 25, // GPIO_AD_B1_09, USB_MUX_SEL0
-    USB_POWER_ACK           = 3,  // GPIO_B0_03  Note: pull-up in order to read
     I2C_STD_BAUDRATE        = 100000,
 
     AUDIOCODEC_I2C_BAUDRATE   = I2C_STD_BAUDRATE,

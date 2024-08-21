@@ -58,7 +58,7 @@ namespace bsp
     {
         void GPIO1_Combined_0_15_IRQHandler(void)
         {
-            BaseType_t xHigherPriorityTaskWoken = 0;
+            BaseType_t xHigherPriorityTaskWoken = pdFALSE;
             uint32_t irq_mask                   = GPIO_GetPinsInterruptFlags(GPIO1);
 
             if (irq_mask & (1 << BSP_CELLULAR_STATUS_PIN)) {
@@ -74,7 +74,7 @@ namespace bsp
 
         void GPIO1_Combined_16_31_IRQHandler(void)
         {
-            BaseType_t xHigherPriorityTaskWoken = 0;
+            BaseType_t xHigherPriorityTaskWoken = pdFALSE;
             uint32_t irq_mask                   = GPIO_GetPinsInterruptFlags(GPIO1);
 
             if (irq_mask & (1 << BSP_BLUETOOTH_UART_CTS_PIN)) {
@@ -90,11 +90,15 @@ namespace bsp
 
         void GPIO2_Combined_0_15_IRQHandler(void)
         {
-            BaseType_t xHigherPriorityTaskWoken = 0;
+            BaseType_t xHigherPriorityTaskWoken = pdFALSE;
             uint32_t irq_mask                   = GPIO_GetPinsInterruptFlags(GPIO2);
 
             if (irq_mask & (1 << BOARD_KEYBOARD_RF_BUTTON_PIN)) {
                 xHigherPriorityTaskWoken |= hal::key_input::rightFunctionalIRQHandler();
+            }
+
+            if (irq_mask & (1 << BOARD_USB_PROTECTOR_ACK)) {
+                xHigherPriorityTaskWoken |= hal::battery::VBUSAckHandlerIRQ();
             }
 
             if (irq_mask & (1 << BOARD_BATTERY_CHARGER_INTB_PIN)) {
@@ -114,7 +118,7 @@ namespace bsp
 
         void GPIO2_Combined_16_31_IRQHandler(void)
         {
-            BaseType_t xHigherPriorityTaskWoken = 0;
+            BaseType_t xHigherPriorityTaskWoken = pdFALSE;
             uint32_t irq_mask                   = GPIO_GetPinsInterruptFlags(GPIO2);
 
             if (irq_mask & (1 << BOARD_KEYBOARD_IRQ_GPIO_PIN)) {
@@ -142,7 +146,7 @@ namespace bsp
 
         void GPIO3_Combined_16_31_IRQHandler(void)
         {
-            BaseType_t xHigherPriorityTaskWoken = 0;
+            BaseType_t xHigherPriorityTaskWoken = pdFALSE;
             uint32_t irq_mask                   = GPIO_GetPinsInterruptFlags(GPIO3);
 
             if (irq_mask & (1 << BOARD_EINK_BUSY_GPIO_PIN)) {

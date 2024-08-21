@@ -9,7 +9,7 @@
 
 namespace gui::status_bar
 {
-    BatteryText::BatteryText(Item *parent, uint32_t x, uint32_t y, uint32_t w, uint32_t h)
+    BatteryText::BatteryText(Item *parent, std::uint32_t x, std::uint32_t y, std::uint32_t w, std::uint32_t h)
         : BatteryBase(parent, x, y, w, h)
     {
         label = new Label(this, 0, 0, 0, 0);
@@ -36,5 +36,4 @@ namespace gui::status_bar
     {
         label->setText(utils::translate("statusbar_battery_plugged"));
     }
-
 } // namespace gui::status_bar

@@ -8,4 +8,5 @@
 namespace hal::battery
 {
     BaseType_t INTBHandlerIRQ();
+    BaseType_t VBUSAckHandlerIRQ();
 } // namespace hal::battery

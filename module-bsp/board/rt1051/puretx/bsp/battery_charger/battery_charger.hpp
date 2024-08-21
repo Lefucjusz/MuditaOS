@@ -53,11 +53,11 @@ namespace bsp::battery_charger
     enum class BatteryINTBSource
     {
         SOCOnePercentChange = (1 << 7),
-        minVAlert           = (1 << 8),
-        minTemp             = (1 << 9),
-        minSOCAlert         = (1 << 10),
-        maxTemp             = (1 << 13),
-        all                 = 0xFFFF
+        MinVAlert           = (1 << 8),
+        MinTemp             = (1 << 9),
+        MinSOCAlert         = (1 << 10),
+        MaxTemp             = (1 << 13),
+        All                 = 0xFFFF
     };
 
     struct MaxMinVolt

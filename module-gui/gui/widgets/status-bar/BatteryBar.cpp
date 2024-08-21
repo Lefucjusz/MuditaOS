@@ -19,13 +19,13 @@ namespace gui::status_bar
         constexpr auto battery5             = "battery_5";
 
         constexpr auto level1Threshold = 15;
-        constexpr auto level2Threshold = 35;
-        constexpr auto level3Threshold = 55;
-        constexpr auto level4Threshold = 75;
-        constexpr auto level5Threshold = 95;
+        constexpr auto level2Threshold = 30;
+        constexpr auto level3Threshold = 50;
+        constexpr auto level4Threshold = 70;
+        constexpr auto level5Threshold = 85;
     } // namespace
 
-    BatteryBar::BatteryBar(Item *parent, uint32_t x, uint32_t y, uint32_t w, uint32_t h)
+    BatteryBar::BatteryBar(Item *parent, std::uint32_t x, std::uint32_t y, std::uint32_t w, std::uint32_t h)
         : BatteryBase(parent, x, y, w, h)
     {
         img = new Image(this, battery1, style::status_bar::imageTypeSpecifier);
@@ -64,5 +64,4 @@ namespace gui::status_bar
     {
         img->set(batteryChargingReady, style::status_bar::imageTypeSpecifier);
     }
-
 } // namespace gui::status_bar

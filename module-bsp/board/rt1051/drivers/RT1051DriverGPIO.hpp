@@ -16,10 +16,10 @@ namespace drivers
       public:
         RT1051DriverGPIO(const GPIOInstances &inst, const DriverGPIOParams &params);
 
-        ~RT1051DriverGPIO();
+        ~RT1051DriverGPIO() override;
 
         // Configures specific pin
-        int32_t ConfPin(const DriverGPIOPinParams &params);
+        int32_t ConfPin(const DriverGPIOPinParams &params) override final;
 
         // Sets the output level of the multiple GPIO pins to the logic 1.
         void SetPort(const uint32_t mask) override final;

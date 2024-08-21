@@ -20,7 +20,7 @@
 
 namespace
 {
-    hal::battery::AbstractBatteryCharger::ChargingStatus transformChargingState(
+    constexpr hal::battery::AbstractBatteryCharger::ChargingStatus transformChargingState(
         bsp::battery_charger::BatteryRetval status)
     {
         using Status   = bsp::battery_charger::BatteryRetval;
@@ -37,7 +37,7 @@ namespace
         }
     }
 
-    hal::battery::AbstractBatteryCharger::TemperatureState transformTemperatureState(
+    constexpr hal::battery::AbstractBatteryCharger::TemperatureState transformTemperatureState(
         bsp::battery_charger::TemperatureRanges range)
     {
         using Range = bsp::battery_charger::TemperatureRanges;
@@ -59,10 +59,10 @@ namespace
     /// A few constants to make code readability better
     constexpr auto int_b_soc_change =
         static_cast<std::uint16_t>(bsp::battery_charger::BatteryINTBSource::SOCOnePercentChange);
-    constexpr auto int_b_max_temp = static_cast<std::uint16_t>(bsp::battery_charger::BatteryINTBSource::maxTemp);
-    constexpr auto int_b_min_temp = static_cast<std::uint16_t>(bsp::battery_charger::BatteryINTBSource::minTemp);
-    constexpr auto int_b_all      = static_cast<std::uint16_t>(bsp::battery_charger::BatteryINTBSource::all);
-    constexpr auto int_b_miv_v    = static_cast<std::uint16_t>(bsp::battery_charger::BatteryINTBSource::minVAlert);
+    constexpr auto int_b_max_temp = static_cast<std::uint16_t>(bsp::battery_charger::BatteryINTBSource::MaxTemp);
+    constexpr auto int_b_min_temp = static_cast<std::uint16_t>(bsp::battery_charger::BatteryINTBSource::MinTemp);
+    constexpr auto int_b_all      = static_cast<std::uint16_t>(bsp::battery_charger::BatteryINTBSource::All);
+    constexpr auto int_b_min_v    = static_cast<std::uint16_t>(bsp::battery_charger::BatteryINTBSource::MinVAlert);
 
     constexpr auto int_source_charger =
         static_cast<std::uint8_t>(bsp::battery_charger::TopControllerIRQsource::CHGR_INT);
@@ -73,13 +73,8 @@ namespace
     constexpr auto irqClearTimerName   = "BatteryIrqClearTimer";
     constexpr auto irqClearTimerTimeMs = 10000;
 
-    void clearIrqStatusHandler([[maybe_unused]] TimerHandle_t xTimer)
-    {
-        if (bsp::battery_charger::getStatusRegister() != 0) {
-            bsp::battery_charger::clearFuelGaugeIRQ(
-                static_cast<std::uint16_t>(bsp::battery_charger::BatteryINTBSource::all));
-        }
-    }
+    constexpr auto irqVBUSTimerName   = "BatteryIrqVBUSTimer";
+    constexpr auto irqVBUSTimerTimeMs = 100;
 } // namespace
 
 namespace hal::battery
@@ -91,6 +86,7 @@ namespace hal::battery
         {
             enum class Type
             {
+                VBUSAck,
                 ControllerINTB,
                 USBChargerAttached
             };
@@ -115,32 +111,52 @@ namespace hal::battery
         static constexpr auto irqWorkerStackSize = 1024 * 2;
 
         void setChargingCurrentLimit(std::uint8_t usbType);
+        void handleVBUSNotification();
         void sendNotification(AbstractBatteryCharger::Events event);
         void checkControllerInterrupts();
 
         QueueHandle_t notificationChannel;
         TimerHandle_t irqClearTimerHandle;
+        TimerHandle_t irqVBUSTimerHandle; // Used to filter occasional repeated IRQs from VBUS detector
         inline static std::unique_ptr<BatteryWorkerQueue> workerQueue;
     };
 
     PureBatteryCharger::PureBatteryCharger(QueueHandle_t irqQueueHandle)
-        : notificationChannel{irqQueueHandle},
-          irqClearTimerHandle{xTimerCreate(
-              irqClearTimerName, pdMS_TO_TICKS(irqClearTimerTimeMs), pdFALSE, nullptr, clearIrqStatusHandler)}
+        : notificationChannel{irqQueueHandle}
     {
+        irqClearTimerHandle = xTimerCreate(irqClearTimerName,
+                                           pdMS_TO_TICKS(irqClearTimerTimeMs),
+                                           pdFALSE,
+                                           nullptr,
+                                           []([[maybe_unused]] TimerHandle_t xTimer) {
+                                               if (bsp::battery_charger::getStatusRegister() != 0) {
+                                                   bsp::battery_charger::clearFuelGaugeIRQ(
+                                                       static_cast<std::uint16_t>(bsp::battery_charger::BatteryINTBSource::All));
+                                               }
+                                           });
+
+        irqVBUSTimerHandle = xTimerCreate(irqVBUSTimerName,
+                                          pdMS_TO_TICKS(irqVBUSTimerTimeMs),
+                                          pdFALSE,
+                                          this,
+                                          [](TimerHandle_t xTimer) {
+                                              auto inst = static_cast<hal::battery::PureBatteryCharger *>(pvTimerGetTimerID(xTimer));
+                                              inst->sendNotification(AbstractBatteryCharger::Events::VBUSDetection);
+                                          });
 
         workerQueue = std::make_unique<BatteryWorkerQueue>(
             "battery_charger",
             [this](const auto &msg) {
                 switch (msg.type) {
+                case IrqEvents::Type::VBUSAck:
+                    handleVBUSNotification();
+                    break;
                 case IrqEvents::Type::ControllerINTB:
                     checkControllerInterrupts();
                     break;
-
                 case IrqEvents::Type::USBChargerAttached:
                     setChargingCurrentLimit(msg.chargerType);
                     break;
-
                 default:
                     LOG_ERROR("Unhandled IrqEvent %d", static_cast<int>(msg.type));
                     break;
@@ -247,8 +263,8 @@ namespace hal::battery
         }
         if (static_cast<bool>(IRQSource.value() & int_source_fuel_gauge)) {
             const auto status = bsp::battery_charger::getStatusRegister();
-            if (static_cast<bool>(status & int_b_miv_v)) {
-                bsp::battery_charger::clearFuelGaugeIRQ(int_b_miv_v);
+            if (static_cast<bool>(status & int_b_min_v)) {
+                bsp::battery_charger::clearFuelGaugeIRQ(int_b_min_v);
                 if (bsp::battery_charger::getChargeStatus() == bsp::battery_charger::BatteryRetval::ChargerCharging) {
                     if (xTimerIsTimerActive(irqClearTimerHandle) == pdFALSE) {
                         xTimerStart(irqClearTimerHandle, 0);
@@ -277,6 +293,13 @@ namespace hal::battery
         }
     }
 
+    void PureBatteryCharger::handleVBUSNotification()
+    {
+        if (xTimerIsTimerActive(irqVBUSTimerHandle) == pdFALSE) {
+            xTimerStart(irqVBUSTimerHandle, 0);
+        }
+    }
+
     void PureBatteryCharger::sendNotification(AbstractBatteryCharger::Events event)
     {
         const auto status = xQueueSend(notificationChannel, &event, pdMS_TO_TICKS(100));
@@ -299,5 +322,10 @@ namespace hal::battery
     BaseType_t INTBHandlerIRQ()
     {
         return PureBatteryCharger::getWorkerQueueHandle().post({PureBatteryCharger::IrqEvents::Type::ControllerINTB});
+    }
+
+    BaseType_t VBUSAckHandlerIRQ()
+    {
+        return PureBatteryCharger::getWorkerQueueHandle().post({PureBatteryCharger::IrqEvents::Type::VBUSAck});
     }
 } // namespace hal::battery

@@ -9,12 +9,13 @@ namespace gui
 {
     class Label;
 }
+
 namespace gui::status_bar
 {
     class BatteryText : public BatteryBase
     {
       public:
-        BatteryText(Item *parent, uint32_t x, uint32_t y, uint32_t w, uint32_t h);
+        BatteryText(Item *parent, std::uint32_t x, std::uint32_t y, std::uint32_t w, std::uint32_t h);
 
       private:
         void showBatteryLevel(std::uint32_t percentage) override;

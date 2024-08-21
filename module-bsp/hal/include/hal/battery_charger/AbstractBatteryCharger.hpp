@@ -30,6 +30,7 @@ namespace hal::battery
 
         enum class Events : std::uint8_t
         {
+            VBUSDetection,
             Charger,
             SOC,
             Brownout
