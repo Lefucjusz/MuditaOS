@@ -10,17 +10,24 @@ class AbstractTechnicalInformationRepository
 {
   public:
     using OnReadCallback                                       = std::function<void()>;
+
     virtual ~AbstractTechnicalInformationRepository() noexcept = default;
+
     virtual void readImei(OnReadCallback callback)             = 0;
-    virtual std::string getImei()                              = 0;
+    [[nodiscard]] virtual std::string getImei() const                             = 0;
+
+    [[nodiscard]] virtual std::string getBatteryLevel() const = 0;
 };
 
 class TechnicalInformationRepository : public AbstractTechnicalInformationRepository, public app::AsyncCallbackReceiver
 {
   public:
     explicit TechnicalInformationRepository(app::ApplicationCommon *application);
+
     void readImei(OnReadCallback callback) override;
-    std::string getImei() override;
+    [[nodiscard]] std::string getImei() const override;
+
+    [[nodiscard]] std::string getBatteryLevel() const override;
 
   private:
     app::ApplicationCommon *application{};

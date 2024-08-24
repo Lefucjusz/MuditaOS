@@ -27,31 +27,31 @@ int SignalStrength::rssiTodBm(const int rssi)
     return ret;
 }
 
-Store::RssiBar SignalStrength::rssidBmToBar(const int rssidBm)
+Store::RssiBar SignalStrength::rssidBmToBar(int rssidBm)
 {
     using namespace Store;
 
     if (rssidBm == rssidBm_invalid) {
-        return RssiBar::zero;
+        return RssiBar::Zero;
     }
     else if (rssidBm >= rssidBm_four_bar_margin) {
-        return RssiBar::four;
+        return RssiBar::Four;
     }
     else if (rssidBm >= rssidBm_three_bar_margin) {
-        return RssiBar::three;
+        return RssiBar::Three;
     }
     else if (rssidBm >= rssidBm_two_bar_margin) {
-        return RssiBar::two;
+        return RssiBar::Two;
     }
     else if (rssidBm >= rssidBm_one_bar_margin) {
-        return RssiBar::one;
+        return RssiBar::One;
     }
     else {
-        return RssiBar::zero;
+        return RssiBar::Zero;
     }
 }
 
-void SignalStrength::setRssi(const int rssi)
+void SignalStrength::setRssi(int rssi)
 {
     data.rssi    = rssi;
     data.rssidBm = rssiTodBm(data.rssi);

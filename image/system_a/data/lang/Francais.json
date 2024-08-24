@@ -497,6 +497,7 @@
     "app_settings_tech_info_imei": "IMEI",
     "app_settings_tech_info_model": "Mod\u00e8le",
     "app_settings_tech_info_os_version": "Version du syst\u00e8me d'exploitation",
+    "app_settings_tech_info_battery_level": "Niveau de batterie",
     "app_settings_tech_info_pcb_am": "pcbAM",
     "app_settings_tech_info_pcb_lm": "pcbLM",
     "app_settings_tech_info_pcb_mb": "pcbMB",

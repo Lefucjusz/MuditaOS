@@ -15,14 +15,14 @@ namespace gui::status_bar
     class SignalStrengthBar : public SignalStrengthBase
     {
       public:
-        SignalStrengthBar(Item *parent, uint32_t x, uint32_t y, uint32_t w, uint32_t h);
+        SignalStrengthBar(Item *parent, std::uint32_t x, std::uint32_t y, std::uint32_t w, std::uint32_t h);
         [[nodiscard]] bool update(const Store::SignalStrength &signal,
                                   const Store::Network::Status &status,
                                   const Store::Tethering &tethering) override;
 
       private:
         Image *img = nullptr;
-        Store::RssiBar currentRssiBar        = Store::RssiBar::zero;
+        Store::RssiBar currentRssiBar        = Store::RssiBar::Zero;
         Store::Network::Status currentStatus = Store::Network::Status::NotRegistered;
         Store::Tethering currentTethering    = Store::Tethering::Off;
     };

@@ -3,7 +3,7 @@
 
 #include "TechnicalInformationRepository.hpp"
 #include <service-cellular/ServiceCellular.hpp>
-#include <application-settings/ApplicationSettings.hpp>
+#include <EventStore.hpp>
 
 TechnicalInformationRepository::TechnicalInformationRepository(app::ApplicationCommon *application)
     : app::AsyncCallbackReceiver{application}, application{application}
@@ -12,7 +12,7 @@ TechnicalInformationRepository::TechnicalInformationRepository(app::ApplicationC
 void TechnicalInformationRepository::readImei(AbstractTechnicalInformationRepository::OnReadCallback readDoneCallback)
 {
 
-    std::function<void(const std::string &imei)> callback = [&](const std::string &imei) { imeiStr = imei; };
+    auto callback = [this](const std::string &imei) { imeiStr = imei; };
 
     auto msg  = std::make_unique<cellular::GetImeiRequest>();
     auto task = app::AsyncRequest::createFromMessage(std::move(msg), ::service::name::cellular);
@@ -27,7 +27,12 @@ void TechnicalInformationRepository::readImei(AbstractTechnicalInformationReposi
     task->execute(this->application, this, cb);
 }
 
-std::string TechnicalInformationRepository::getImei()
+std::string TechnicalInformationRepository::getImei() const
 {
     return imeiStr;
+}
+
+std::string TechnicalInformationRepository::getBatteryLevel() const
+{
+    return std::to_string(Store::Battery::get().level) + "%";
 }

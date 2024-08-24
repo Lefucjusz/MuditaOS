@@ -12,21 +12,21 @@
 
 class TechnicalInformationModel : public app::InternalModel<gui::ListItem *>, public gui::ListItemProvider
 {
-  private:
-    app::ApplicationCommon *application = nullptr;
-    std::unique_ptr<AbstractFactoryData> factoryData;
-    std::shared_ptr<AbstractTechnicalInformationRepository> technicalInformationRepository = nullptr;
-
   public:
     explicit TechnicalInformationModel(std::unique_ptr<AbstractFactoryData> &&factoryData,
-                                       std::unique_ptr<AbstractTechnicalInformationRepository> repository);
+                                       std::unique_ptr<AbstractTechnicalInformationRepository> &&repository);
 
-    void createData();
-    void clearData();
-
-    [[nodiscard]] auto requestRecordsCount() -> unsigned int override;
-    [[nodiscard]] auto getMinimalItemSpaceRequired() const -> unsigned int override;
+    [[nodiscard]] auto requestRecordsCount() -> unsigned override;
+    [[nodiscard]] auto getMinimalItemSpaceRequired() const -> unsigned override;
     auto getItem(gui::Order order) -> gui::ListItem * override;
-    void requestRecords(const uint32_t offset, const uint32_t limit) override;
-    void requestImei(std::function<void()> onImeiReadCallback);
+    auto requestRecords(std::uint32_t offset, std::uint32_t limit) -> void override;
+    auto requestImei(std::function<void()> onImeiReadCallback) -> void;
+
+    auto createData()-> void;
+    auto clearData() -> void;
+
+  private:
+    app::ApplicationCommon *application{nullptr};
+    std::unique_ptr<AbstractFactoryData> factoryData;
+    std::unique_ptr<AbstractTechnicalInformationRepository> technicalInformationRepository;
 };

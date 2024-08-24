@@ -524,6 +524,7 @@
     "app_settings_tech_info_imei": "IMEI",
     "app_settings_tech_info_model": "Model",
     "app_settings_tech_info_os_version": "Wersja OS",
+    "app_settings_tech_info_battery_level": "Poziom baterii",
     "app_settings_tech_info_pcb_am": "pcbAM",
     "app_settings_tech_info_pcb_lm": "pcbLM",
     "app_settings_tech_info_pcb_mb": "pcbMB",

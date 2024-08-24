@@ -6,7 +6,6 @@
 #include <string>
 #include <Image.hpp>
 #include <map>
-#include <magic_enum.hpp>
 
 namespace gui::status_bar
 {
@@ -28,20 +27,20 @@ namespace gui::status_bar
 
         using SignalMap = std::map<Store::RssiBar, std::string>;
 
-        const SignalMap signalMapHomeCon = {{Store::RssiBar::zero, signal0},
-                                            {Store::RssiBar::one, signal1},
-                                            {Store::RssiBar::two, signal2},
-                                            {Store::RssiBar::three, signal3},
-                                            {Store::RssiBar::four, signal4}};
+        const SignalMap signalMapHomeCon = {{Store::RssiBar::Zero, signal0},
+                                            {Store::RssiBar::One, signal1},
+                                            {Store::RssiBar::Two, signal2},
+                                            {Store::RssiBar::Three, signal3},
+                                            {Store::RssiBar::Four, signal4}};
 
-        const SignalMap signalMapRoaming = {{Store::RssiBar::zero, signal0_roaming},
-                                            {Store::RssiBar::one, signal1_roaming},
-                                            {Store::RssiBar::two, signal2_roaming},
-                                            {Store::RssiBar::three, signal3_roaming},
-                                            {Store::RssiBar::four, signal4_roaming}};
+        const SignalMap signalMapRoaming = {{Store::RssiBar::Zero, signal0_roaming},
+                                            {Store::RssiBar::One, signal1_roaming},
+                                            {Store::RssiBar::Two, signal2_roaming},
+                                            {Store::RssiBar::Three, signal3_roaming},
+                                            {Store::RssiBar::Four, signal4_roaming}};
     } // namespace
 
-    SignalStrengthBar::SignalStrengthBar(Item *parent, uint32_t x, uint32_t y, uint32_t w, uint32_t h)
+    SignalStrengthBar::SignalStrengthBar(Item *parent, std::uint32_t x, std::uint32_t y, std::uint32_t w, std::uint32_t h)
         : SignalStrengthBase(parent, x, y, w, h)
     {
         img = new Image(this, signal_none, style::status_bar::imageTypeSpecifier);

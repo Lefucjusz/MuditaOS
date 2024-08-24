@@ -75,12 +75,6 @@ namespace Store
         return network;
     }
 
-    bool GSM::simCardInserted()
-    {
-        cpp_freertos::LockGuard lock(mutex);
-        return (sim == SIM::SIM1 || sim == SIM::SIM2);
-    }
-
     void GSM::setNetworkOperatorName(const std::string &newNetworkOperatorName)
     {
         cpp_freertos::LockGuard lock(mutex);
@@ -104,4 +98,10 @@ namespace Store
         cpp_freertos::LockGuard lock(mutex);
         return tethering;
     }
-}; // namespace Store
+
+    bool GSM::simCardInserted()
+    {
+        cpp_freertos::LockGuard lock(mutex);
+        return (sim == SIM::SIM1 || sim == SIM::SIM2);
+    }
+} // namespace Store

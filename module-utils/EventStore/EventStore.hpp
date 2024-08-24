@@ -23,9 +23,6 @@ namespace Store
 {
     struct Battery
     {
-      private:
-        static bool updated;
-
       public:
         enum class LevelState : std::uint8_t
         {
@@ -63,23 +60,26 @@ namespace Store
 
         static void setUpdated();
         static bool takeUpdated();
+
+      private:
+        static bool updated;
     };
 
-    enum class RssiBar : size_t
+    enum class RssiBar : std::size_t
     {
-        zero  = 0,
-        one   = 1,
-        two   = 2,
-        three = 3,
-        four  = 4,
-        noOfSupportedBars
+        Zero  = 0,
+        One   = 1,
+        Two   = 2,
+        Three = 3,
+        Four  = 4,
+        NoOfSupportedBars
     };
 
     struct SignalStrength
     {
         int rssi        = 0;
         int rssidBm     = 0;
-        RssiBar rssiBar = RssiBar::zero;
+        RssiBar rssiBar = RssiBar::Zero;
     };
 
     enum class Tethering
@@ -114,11 +114,12 @@ namespace Store
             Unknown = 255
         } accessTechnology = AccessTechnology::Unknown;
 
-        inline bool operator==(const Network &rhs)
+        inline constexpr bool operator==(const Network &rhs) const
         {
             return this->status == rhs.status && this->accessTechnology == rhs.accessTechnology;
         }
-        inline bool operator!=(const Network &rhs)
+
+        inline constexpr bool operator!=(const Network &rhs) const
         {
             return !(*this == rhs);
         }
@@ -126,15 +127,6 @@ namespace Store
 
     struct GSM
     {
-      private:
-        GSM() = default;
-        SignalStrength signalStrength;
-        Network network;
-        std::string networkOperatorName;
-        Tethering tethering;
-
-        static cpp_freertos::MutexStandard mutex;
-
       public:
         GSM(const GSM &) = delete;
         GSM &operator=(const GSM &) = delete;
@@ -155,17 +147,15 @@ namespace Store
             SIM_LOCKED,
             SIM_FAIL,
             SIM_UNKNOWN,
-            NONE,
+            NONE
         } sim = SIM::SIM_UNKNOWN;
 
         enum class SelectedSIM
         {
             SIM1 = static_cast<int>(SIM::SIM1),
             SIM2 = static_cast<int>(SIM::SIM2),
-            NONE,
+            NONE
         } selected = SelectedSIM::SIM1;
-
-        bool simCardInserted();
 
         /// state of modem
         enum class Modem
@@ -173,21 +163,32 @@ namespace Store
             OFF,             /// modem is off - it's not working
             ON_INITIALIZING, /// modem is set to on, just started - initialization not done yet
             ON_NEED_SIMFLOW, /// modem is on, initialized, no SIM initialization yet
-            ON_INITIALIZED,  /// modem is on, and it's fully initialized
+            ON_INITIALIZED  /// modem is on, and it's fully initialized
         } modem = Modem::OFF;
 
         void setSignalStrength(const SignalStrength &newSignalStrength);
-        SignalStrength getSignalStrength() const;
+        [[nodiscard]] SignalStrength getSignalStrength() const;
 
         void setNetwork(const Network &network);
-        Network getNetwork() const;
+        [[nodiscard]] Network getNetwork() const;
 
         void setNetworkOperatorName(const std::string &newNetworkOperatorName);
-        std::string getNetworkOperatorName() const;
+        [[nodiscard]] std::string getNetworkOperatorName() const;
 
         void setTethering(const Tethering &newTethering);
-        Tethering getTethering() const;
+        [[nodiscard]] Tethering getTethering() const;
+
+        bool simCardInserted();
 
         static GSM *get();
+
+      private:
+        GSM() = default;
+        SignalStrength signalStrength{};
+        Network network{};
+        std::string networkOperatorName{};
+        Tethering tethering{};
+
+        static cpp_freertos::MutexStandard mutex;
     };
-}; // namespace Store
+} // namespace Store

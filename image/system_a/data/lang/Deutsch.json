@@ -531,6 +531,7 @@
     "app_settings_tech_info_imei": "IMEI",
     "app_settings_tech_info_model": "Modell",
     "app_settings_tech_info_os_version": "OS-Version",
+    "app_settings_tech_info_battery_level": "Batteriestand",
     "app_settings_tech_info_pcb_am": "pcbAM",
     "app_settings_tech_info_pcb_lm": "pcbLM",
     "app_settings_tech_info_pcb_mb": "pcbMB",
