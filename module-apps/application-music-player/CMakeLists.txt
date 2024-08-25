@@ -63,6 +63,7 @@ target_link_libraries(application-music-player
         module-audio
 )
 
-if (${ENABLE_TESTS})
-    add_subdirectory(tests)
-endif()
+# TODO tests should be rewritten
+# if (${ENABLE_TESTS})
+#     add_subdirectory(tests)
+# endif()

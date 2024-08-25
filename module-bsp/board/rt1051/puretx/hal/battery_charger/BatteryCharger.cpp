@@ -141,7 +141,7 @@ namespace hal::battery
             });
 
         workerQueue = std::make_unique<BatteryWorkerQueue>(
-            "battery_charger",
+            "BatteryChargerWorker",
             [this](const auto &msg) {
                 switch (msg.type) {
                 case IrqEvents::Type::VBUSAck:

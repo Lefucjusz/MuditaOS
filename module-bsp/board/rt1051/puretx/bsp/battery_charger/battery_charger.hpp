@@ -66,6 +66,8 @@ namespace bsp::battery_charger
         unsigned maxMilliVolt{0};
     };
 
+    inline constexpr auto fuelGaugeRegistersCount{0xFF + 1};
+
     int init();
     void deinit();
 

@@ -13,7 +13,9 @@ target_sources(
         hal/battery_charger/BatteryCharger.cpp
         hal/battery_charger/CurrentMeasurementScope.cpp
         hal/key_input/KeyInput.cpp
+
         bsp/battery_charger/battery_charger.cpp
+        bsp/battery_charger/FuelGaugeConfig.cpp
         bsp/eink/eink_gpio.cpp
         bsp/keyboard/keyboard.cpp
         bsp/lpm/PowerProfile.cpp

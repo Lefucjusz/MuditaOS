@@ -133,7 +133,7 @@ namespace hal::battery
         });
 
         worker_queue = std::make_unique<BatteryWorkerQueue>(
-            "battery_charger", [this](const auto &msg) { handleIrqEvents(msg); }, 1024);
+            "BatteryChargerWorker", [this](const auto &msg) { handleIrqEvents(msg); }, 1024);
 
         pollFuelGauge();
 

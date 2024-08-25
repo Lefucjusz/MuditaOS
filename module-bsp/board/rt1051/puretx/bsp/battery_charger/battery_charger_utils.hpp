@@ -3,7 +3,6 @@
 #pragma once
 
 #include <bitset>
-#include <fstream>
 
 namespace bsp::battery_charger::utils
 {
@@ -19,20 +18,5 @@ namespace bsp::battery_charger::utils
             return static_cast<int>(bitset.to_ulong() * -1);
         }
         return static_cast<int>(toConvert);
-    }
-
-    std::size_t getFileSize(std::ifstream &file)
-    {
-        const auto currentPosition = file.tellg();
-
-        file.seekg(0, std::ios::beg);
-        const auto begin = file.tellg();
-
-        file.seekg(0, std::ios::end);
-        const auto end = file.tellg();
-
-        file.seekg(currentPosition, std::ios::beg);
-
-        return end - begin;
     }
 } // namespace bsp::battery_charger::utils
