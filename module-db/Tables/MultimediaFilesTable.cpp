@@ -48,7 +48,7 @@ namespace db::multimedia_files
                  result[14].getUInt32()}, // channels
             };
         }
-    }
+    } // namespace
 
     MultimediaFilesTable::MultimediaFilesTable(Database *db) : Table(db)
     {
@@ -192,15 +192,17 @@ namespace db::multimedia_files
 
     auto MultimediaFilesTable::getLimitOffset(std::uint32_t offset, std::uint32_t limit) -> std::vector<TableRow>
     {
-        auto retQuery =
-            db->query("SELECT * from files ORDER BY title COLLATE NOCASE ASC LIMIT " u32_ " OFFSET " u32_ ";", limit, offset);
+        auto retQuery = db->query(
+            "SELECT * from files ORDER BY title COLLATE NOCASE ASC LIMIT " u32_ " OFFSET " u32_ ";", limit, offset);
         return retQueryUnpack(std::move(retQuery));
     }
 
     auto MultimediaFilesTable::getArtistsLimitOffset(std::uint32_t offset, std::uint32_t limit) -> std::vector<Artist>
     {
         const auto &retQuery = db->query(
-            "SELECT DISTINCT artist from files ORDER BY artist COLLATE NOCASE ASC LIMIT " u32_ " OFFSET " u32_ ";", limit, offset);
+            "SELECT DISTINCT artist from files ORDER BY artist COLLATE NOCASE ASC LIMIT " u32_ " OFFSET " u32_ ";",
+            limit,
+            offset);
         if ((retQuery == nullptr) || (retQuery->getRowCount() == 0)) {
             return {};
         }
@@ -235,21 +237,21 @@ namespace db::multimedia_files
     }
 
     auto MultimediaFilesTable::getLimitOffsetByField(std::uint32_t offset,
-                                                                      std::uint32_t limit,
-                                                                      TableFields field,
-                                                                      const char *str) -> std::vector<TableRow>
+                                                     std::uint32_t limit,
+                                                     TableFields field,
+                                                     const char *str) -> std::vector<TableRow>
     {
         const auto &fieldName = getFieldName(field);
         if (fieldName.empty() || (str == nullptr)) {
             return {};
         }
 
-        auto retQuery =
-            db->query("SELECT * FROM files WHERE %q=" str_ " ORDER BY title COLLATE NOCASE ASC LIMIT " u32_ " OFFSET " u32_ ";",
-                      fieldName.c_str(),
-                      str,
-                      limit,
-                      offset);
+        auto retQuery = db->query("SELECT * FROM files WHERE %q=" str_ " ORDER BY title COLLATE NOCASE ASC LIMIT " u32_
+                                  " OFFSET " u32_ ";",
+                                  fieldName.c_str(),
+                                  str,
+                                  limit,
+                                  offset);
 
         return retQueryUnpack(std::move(retQuery));
     }
@@ -276,10 +278,10 @@ namespace db::multimedia_files
 
     auto MultimediaFilesTable::getAlbumsLimitOffset(std::uint32_t offset, std::uint32_t limit) -> std::vector<Album>
     {
-        const auto &retQuery =
-            db->query("SELECT DISTINCT artist,album FROM files ORDER BY album COLLATE NOCASE ASC LIMIT " u32_ " OFFSET " u32_ ";",
-                      limit,
-                      offset);
+        const auto &retQuery = db->query(
+            "SELECT DISTINCT artist,album FROM files ORDER BY album COLLATE NOCASE ASC LIMIT " u32_ " OFFSET " u32_ ";",
+            limit,
+            offset);
         if ((retQuery == nullptr) || (retQuery->getRowCount() == 0)) {
             return {};
         }
@@ -412,8 +414,8 @@ namespace db::multimedia_files
                                                      std::uint32_t limit) -> std::vector<TableRow>
     {
         const auto &query = "SELECT * FROM files WHERE " + constructMatchPattern(paths) +
-                            " ORDER BY title COLLATE NOCASE ASC LIMIT " + std::to_string(limit) +
-                            " OFFSET " + std::to_string(offset) + ";";
+                            " ORDER BY title COLLATE NOCASE ASC LIMIT " + std::to_string(limit) + " OFFSET " +
+                            std::to_string(offset) + ";";
         auto retQuery = db->query(query.c_str());
         return retQueryUnpack(std::move(retQuery));
     }

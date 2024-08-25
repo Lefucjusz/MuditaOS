@@ -355,7 +355,8 @@ namespace utils
     }
 
     template <typename T, std::size_t N, typename Generator>
-    [[nodiscard]] inline constexpr std::array<T, N> makeArray(Generator g) {
+    [[nodiscard]] inline constexpr std::array<T, N> makeArray(Generator g)
+    {
         std::array<T, N> array{};
         for (std::size_t i = 0; i < N; ++i) {
             array[i] = g(i);

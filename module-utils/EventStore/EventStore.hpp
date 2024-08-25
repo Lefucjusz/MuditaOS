@@ -163,7 +163,7 @@ namespace Store
             OFF,             /// modem is off - it's not working
             ON_INITIALIZING, /// modem is set to on, just started - initialization not done yet
             ON_NEED_SIMFLOW, /// modem is on, initialized, no SIM initialization yet
-            ON_INITIALIZED  /// modem is on, and it's fully initialized
+            ON_INITIALIZED   /// modem is on, and it's fully initialized
         } modem = Modem::OFF;
 
         void setSignalStrength(const SignalStrength &newSignalStrength);

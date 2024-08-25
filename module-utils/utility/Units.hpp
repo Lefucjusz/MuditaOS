@@ -9,7 +9,7 @@ namespace units
 {
     using Voltage     = std::uint32_t; /// mV
     using SOC         = std::uint8_t;  /// 0-100%
-    using Current = std::int32_t; /// mA
+    using Current     = std::int32_t;  /// mA
     using Temperature = float;
     using Percent     = float;
 } // namespace units

@@ -14,7 +14,7 @@ class AbstractTechnicalInformationRepository
     virtual ~AbstractTechnicalInformationRepository() noexcept = default;
 
     virtual void readImei(OnReadCallback callback)             = 0;
-    [[nodiscard]] virtual std::string getImei() const                             = 0;
+    [[nodiscard]] virtual std::string getImei() const          = 0;
 
     [[nodiscard]] virtual std::string getBatteryLevel() const = 0;
 };

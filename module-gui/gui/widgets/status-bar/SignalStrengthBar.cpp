@@ -40,7 +40,8 @@ namespace gui::status_bar
                                             {Store::RssiBar::Four, signal4_roaming}};
     } // namespace
 
-    SignalStrengthBar::SignalStrengthBar(Item *parent, std::uint32_t x, std::uint32_t y, std::uint32_t w, std::uint32_t h)
+    SignalStrengthBar::SignalStrengthBar(
+        Item *parent, std::uint32_t x, std::uint32_t y, std::uint32_t w, std::uint32_t h)
         : SignalStrengthBase(parent, x, y, w, h)
     {
         img = new Image(this, signal_none, style::status_bar::imageTypeSpecifier);

@@ -89,9 +89,9 @@ namespace app::home_screen
         virtual void startSnoozeTimer(std::chrono::seconds snoozeDuration)                       = 0;
         virtual void stopSnoozeTimer()                                                           = 0;
         virtual void restartSnoozeTimer(std::chrono::seconds snoozeDuration)                     = 0;
-        [[nodiscard]] virtual std::uint32_t getBatteryLvl() const                                              = 0;
-        [[nodiscard]] virtual bool isBatteryCharging() const                                                   = 0;
-        [[nodiscard]] virtual bool isAlarmActivatedByLatch() const                                             = 0;
+        [[nodiscard]] virtual std::uint32_t getBatteryLvl() const                                = 0;
+        [[nodiscard]] virtual bool isBatteryCharging() const                                     = 0;
+        [[nodiscard]] virtual bool isAlarmActivatedByLatch() const                               = 0;
         virtual void setLayout(gui::LayoutGenerator layoutGenerator)                             = 0;
         virtual void incAlarmMinute()                                                            = 0;
         virtual void decAlarmMinute()                                                            = 0;

@@ -218,10 +218,12 @@ void CVSDAudioDevice::enableInput()
 auto BluetoothAudioDevice::fillSbcAudioBuffer() -> int
 {
     int totalNumBytesRead                    = 0;
-    const auto audioSamplesPerSbcBuffer = btstack_sbc_encoder_num_audio_frames();
-    const auto context                             = &AVRCP::mediaTracker;
+    const auto audioSamplesPerSbcBuffer      = btstack_sbc_encoder_num_audio_frames();
+    const auto context                       = &AVRCP::mediaTracker;
 
-    while ((context->samples_ready >= audioSamplesPerSbcBuffer) && ((context->max_media_payload_size - context->sbc_storage_count) >= btstack_sbc_encoder_sbc_buffer_length())) {
+    while (
+        (context->samples_ready >= audioSamplesPerSbcBuffer) &&
+        ((context->max_media_payload_size - context->sbc_storage_count) >= btstack_sbc_encoder_sbc_buffer_length())) {
         audio::Stream::Span dataSpan;
         Sink::_stream->peek(dataSpan);
 
@@ -243,9 +245,10 @@ auto BluetoothAudioDevice::fillSbcAudioBuffer() -> int
 
 auto BluetoothAudioDevice::scaleVolume(audio::Stream::Span &dataSpan) -> void
 {
-    constexpr auto bytesPerSample = sizeof(std::int16_t) / sizeof(std::uint8_t); // Samples are signed 16-bit, but stored in uint8_t array
-    constexpr auto volumeLevels = (audio::maxVolume - audio::minVolume) + 1;
-    constexpr auto volumeScaleLut = utils::makeArray<float, volumeLevels>([](auto index){
+    constexpr auto bytesPerSample =
+        sizeof(std::int16_t) / sizeof(std::uint8_t); // Samples are signed 16-bit, but stored in uint8_t array
+    constexpr auto volumeLevels   = (audio::maxVolume - audio::minVolume) + 1;
+    constexpr auto volumeScaleLut = utils::makeArray<float, volumeLevels>([](auto index) {
         /* Return zero when muted */
         if (index == 0) {
             return 0.0f;
@@ -320,7 +323,7 @@ audio::AudioDevice::RetCode A2DPAudioDevice::waitUntilStreamPaused()
      * sent before pause request has been fully processed, what results in A2DP stream
      * not being restarted. */
     constexpr auto retryDelayMs = 10;
-    constexpr auto timeoutMs = 100;
+    constexpr auto timeoutMs    = 100;
 
     auto timeoutTicks = cpp_freertos::Ticks::MsToTicks(timeoutMs);
     while ((AVRCP::playInfo.status == AVRCP_PLAYBACK_STATUS_PLAYING) && (timeoutTicks > 0)) {

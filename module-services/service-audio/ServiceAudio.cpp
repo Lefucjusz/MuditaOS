@@ -706,7 +706,7 @@ std::string ServiceAudio::getSetting(const Setting &setting,
                                      const Profile::Type &profileType,
                                      const PlaybackType &playbackType)
 {
-    std::string defaultValue = {};
+    std::string defaultValue       = {};
     auto targetProfile             = profileType;
     auto targetPlayback            = playbackType;
 

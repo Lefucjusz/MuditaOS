@@ -12,8 +12,8 @@ namespace app::music
     class SongsRepository : public app::AsyncCallbackReceiver
     {
       public:
-        using OnGetMusicFilesListCallback =
-            std::function<bool(const std::vector<db::multimedia_files::MultimediaFilesRecord> &records, unsigned count)>;
+        using OnGetMusicFilesListCallback = std::function<bool(
+            const std::vector<db::multimedia_files::MultimediaFilesRecord> &records, unsigned count)>;
         using OnGetAlbumsListCallback =
             std::function<bool(const std::vector<db::multimedia_files::AlbumWithMetadata> &records, unsigned count)>;
         using OnGetArtistListCallback =
@@ -55,7 +55,8 @@ namespace app::music
         [[nodiscard]] auto getNextFilePath(const std::string &filePath) const -> std::string;
         [[nodiscard]] auto getPreviousFilePath(const std::string &filePath) const -> std::string;
 
-        [[nodiscard]] auto getRecord(const std::string &filePath) const -> std::optional<db::multimedia_files::MultimediaFilesRecord>;
+        [[nodiscard]] auto getRecord(const std::string &filePath) const
+            -> std::optional<db::multimedia_files::MultimediaFilesRecord>;
 
       private:
         app::ApplicationCommon *application = nullptr;

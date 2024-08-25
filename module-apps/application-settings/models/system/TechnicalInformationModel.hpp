@@ -22,7 +22,7 @@ class TechnicalInformationModel : public app::InternalModel<gui::ListItem *>, pu
     auto requestRecords(std::uint32_t offset, std::uint32_t limit) -> void override;
     auto requestImei(std::function<void()> onImeiReadCallback) -> void;
 
-    auto createData()-> void;
+    auto createData() -> void;
     auto clearData() -> void;
 
   private:

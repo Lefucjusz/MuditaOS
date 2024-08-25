@@ -15,7 +15,7 @@ namespace bluetooth
         void *arg;
     };
 
-    inline constexpr auto runLoopQueueLength    = 20;
+    inline constexpr auto runLoopQueueLength   = 20;
     inline constexpr auto runLoopQueueItemSize = sizeof(FunctionCallType);
 
     class RunLoop

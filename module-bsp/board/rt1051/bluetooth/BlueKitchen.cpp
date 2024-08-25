@@ -17,7 +17,7 @@ using namespace bsp;
 
 BlueKitchen::BlueKitchen()
 {
-    readBuffer = nullptr;
+    readBuffer        = nullptr;
     readReadyCallback = nullptr;
     writeDoneCallback = nullptr;
 }

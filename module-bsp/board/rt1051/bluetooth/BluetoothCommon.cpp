@@ -34,7 +34,8 @@ namespace
          * only variable from application is use PLL3 source or OSC source */
         if (CLOCK_GetMux(kCLOCK_UartMux) == 0) /* PLL3 div6 80M */
         {
-            freq = (CLOCK_GetPllFreq(kCLOCK_PllUsb1) / UART_PERIPHERAL_PLL_DIVIDER) / (CLOCK_GetDiv(kCLOCK_UartDiv) + 1U);
+            freq =
+                (CLOCK_GetPllFreq(kCLOCK_PllUsb1) / UART_PERIPHERAL_PLL_DIVIDER) / (CLOCK_GetDiv(kCLOCK_UartDiv) + 1U);
         }
         else {
             freq = CLOCK_GetOscFreq() / (CLOCK_GetDiv(kCLOCK_UartDiv) + 1U);
@@ -42,7 +43,7 @@ namespace
 
         return freq;
     }
-}
+} // namespace
 
 lpuart_edma_handle_t BluetoothCommon::uartDmaHandle = {};
 
@@ -128,7 +129,8 @@ BTDevice::Error BluetoothCommon::write(const std::uint8_t *buf, std::size_t size
                         ss << " 0x" << std::hex << (int)buf[i];
                     }
                     return ss.str();
-                }().c_str());
+                }()
+                             .c_str());
 
     auto ret = ErrorUndefined;
 
@@ -205,7 +207,7 @@ void BluetoothCommon::uartInit()
     uartConfig.enableRx      = false;
     uartConfig.enableTxCTS   = true;
     uartConfig.txCtsConfig   = kLPUART_CtsSampleAtStart; // To be able to stop TX mid-transfer
-    uartConfig.enableRxRTS   = true;                     // == BSP_BLUETOOTH_UART_BASE->MODIR |= LPUART_MODIR_RXRTSE_MASK;
+    uartConfig.enableRxRTS   = true; // == BSP_BLUETOOTH_UART_BASE->MODIR |= LPUART_MODIR_RXRTSE_MASK;
 
     if (LPUART_Init(BSP_BLUETOOTH_UART_BASE, &uartConfig, uartGetPeripheralClock()) != kStatus_Success) {
         LOG_ERROR("BT: UART config error, could not initialize!");
@@ -263,7 +265,7 @@ void BluetoothCommon::uartDmaCallback(LPUART_Type *base, lpuart_edma_handle_t *h
 {
     std::uint8_t val;
     BaseType_t xHigherPriorityTaskWoken = 0;
-    auto &blueKitchen = bsp::BlueKitchen::getInstance();
+    auto &blueKitchen                   = bsp::BlueKitchen::getInstance();
 
     switch (status) {
     case kStatus_LPUART_TxIdle: {
@@ -306,8 +308,8 @@ extern "C"
     {
         BaseType_t xHigherPriorityTaskWoken = pdFALSE;
         uint8_t val          = bluetooth::Message::EvtReceived;
-        uint32_t isrReg      = LPUART_GetStatusFlags(BSP_BLUETOOTH_UART_BASE);
-        bsp::BlueKitchen &blueKitchen = bsp::BlueKitchen::getInstance();
+        uint32_t isrReg                     = LPUART_GetStatusFlags(BSP_BLUETOOTH_UART_BASE);
+        bsp::BlueKitchen &blueKitchen       = bsp::BlueKitchen::getInstance();
 
         if (isrReg & kLPUART_RxDataRegFullFlag) {
             LOG_WARN("Bluetooth IRQ Rx full");

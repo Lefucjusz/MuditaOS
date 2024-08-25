@@ -259,7 +259,8 @@ void sevm::battery::BatteryController::checkChargerPresence()
     }
     chargerPresence = newChargerPresence;
 
-    const auto plugEvent = (newChargerPresence == ChargerPresence::PluggedIn) ? PlugEvent::CablePlugged : PlugEvent::CableUnplugged;
+    const auto plugEvent =
+        (newChargerPresence == ChargerPresence::PluggedIn) ? PlugEvent::CablePlugged : PlugEvent::CableUnplugged;
     service->bus.sendUnicast(std::make_shared<sevm::USBPlugEvent>(plugEvent), service::name::service_desktop);
 }
 

@@ -121,8 +121,7 @@ namespace hal::battery
         inline static std::unique_ptr<BatteryWorkerQueue> workerQueue;
     };
 
-    PureBatteryCharger::PureBatteryCharger(QueueHandle_t irqQueueHandle)
-        : notificationChannel{irqQueueHandle}
+    PureBatteryCharger::PureBatteryCharger(QueueHandle_t irqQueueHandle) : notificationChannel{irqQueueHandle}
     {
         irqClearTimerHandle = xTimerCreate(irqClearTimerName,
                                            pdMS_TO_TICKS(irqClearTimerTimeMs),
@@ -130,19 +129,16 @@ namespace hal::battery
                                            nullptr,
                                            []([[maybe_unused]] TimerHandle_t xTimer) {
                                                if (bsp::battery_charger::getStatusRegister() != 0) {
-                                                   bsp::battery_charger::clearFuelGaugeIRQ(
-                                                       static_cast<std::uint16_t>(bsp::battery_charger::BatteryINTBSource::All));
+                                                   bsp::battery_charger::clearFuelGaugeIRQ(static_cast<std::uint16_t>(
+                                                       bsp::battery_charger::BatteryINTBSource::All));
                                                }
                                            });
 
-        irqVBUSTimerHandle = xTimerCreate(irqVBUSTimerName,
-                                          pdMS_TO_TICKS(irqVBUSTimerTimeMs),
-                                          pdFALSE,
-                                          this,
-                                          [](TimerHandle_t xTimer) {
-                                              auto inst = static_cast<hal::battery::PureBatteryCharger *>(pvTimerGetTimerID(xTimer));
-                                              inst->sendNotification(AbstractBatteryCharger::Events::VBUSDetection);
-                                          });
+        irqVBUSTimerHandle =
+            xTimerCreate(irqVBUSTimerName, pdMS_TO_TICKS(irqVBUSTimerTimeMs), pdFALSE, this, [](TimerHandle_t xTimer) {
+                auto inst = static_cast<hal::battery::PureBatteryCharger *>(pvTimerGetTimerID(xTimer));
+                inst->sendNotification(AbstractBatteryCharger::Events::VBUSDetection);
+            });
 
         workerQueue = std::make_unique<BatteryWorkerQueue>(
             "battery_charger",

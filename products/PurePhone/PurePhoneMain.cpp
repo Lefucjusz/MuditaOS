@@ -239,11 +239,11 @@ int main()
             applications.push_back(app::CreateLauncher<app::ApplicationCalendar>(app::name_calendar));
 #endif
 #ifdef ENABLE_APP_MUSIC_PLAYER
-            applications.push_back(app::CreateLauncher<app::ApplicationMusicPlayer>(app::name_music_player, app::Closeable::False));
+            applications.push_back(
+                app::CreateLauncher<app::ApplicationMusicPlayer>(app::name_music_player, app::Closeable::False));
 #endif
 #ifdef ENABLE_APP_MEDITATION
-            applications.push_back(
-                app::CreateLauncher<app::ApplicationMeditation>(app::name_meditation));
+            applications.push_back(app::CreateLauncher<app::ApplicationMeditation>(app::name_meditation));
 #endif
 #ifdef ENABLE_APP_CALCULATOR
             applications.push_back(app::CreateLauncher<app::ApplicationCalculator>(app::name_calculator));

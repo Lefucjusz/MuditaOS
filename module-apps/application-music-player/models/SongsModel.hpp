@@ -47,7 +47,8 @@ namespace app::music
         [[nodiscard]] auto isSongPlaying() const noexcept -> bool;
         auto setCurrentSongState(SongState songState) noexcept -> void;
         [[nodiscard]] auto getCurrentFileToken() const noexcept -> std::optional<audio::Token>;
-        [[nodiscard]] auto getActivatedRecord() const noexcept -> std::optional<db::multimedia_files::MultimediaFilesRecord>;
+        [[nodiscard]] auto getActivatedRecord() const noexcept
+            -> std::optional<db::multimedia_files::MultimediaFilesRecord>;
 
         [[nodiscard]] auto getCurrentSongContext() const noexcept -> SongContext;
         auto setCurrentSongContext(const SongContext &context) -> void;

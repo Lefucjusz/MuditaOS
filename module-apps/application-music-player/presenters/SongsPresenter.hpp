@@ -38,7 +38,7 @@ namespace app::music_player
 
             virtual ~Presenter() noexcept = default;
 
-            virtual auto getModel() const -> std::shared_ptr<app::music::SongsModel>  = 0;
+            virtual auto getModel() const -> std::shared_ptr<app::music::SongsModel> = 0;
 
             virtual auto setCurrentlyViewedAlbum(const db::multimedia_files::Album &album) -> void    = 0;
             virtual auto setCurrentlyViewedArtist(const db::multimedia_files::Artist &artist) -> void = 0;
@@ -53,14 +53,14 @@ namespace app::music_player
             virtual auto playNext() -> bool                        = 0;
             virtual auto playPrevious() -> bool                    = 0;
 
-            virtual auto songsStateRequest() -> void                                      = 0;
-            virtual auto progressStateRequest() -> void                                   = 0;
+            virtual auto songsStateRequest() -> void                                        = 0;
+            virtual auto progressStateRequest() -> void                                     = 0;
             virtual auto setPlayingStateCallback(OnPlayingStateChangeCallback &&cb) -> void = 0;
-            virtual auto handleAudioStopNotification(audio::Token token) -> bool          = 0;
-            virtual auto handleAudioEofNotification(audio::Token token) -> bool           = 0;
-            virtual auto handleAudioPausedNotification(audio::Token token) -> bool        = 0;
-            virtual auto handleAudioResumedNotification(audio::Token token) -> bool       = 0;
-            virtual auto handlePlayOrPauseRequest() -> bool                               = 0;
+            virtual auto handleAudioStopNotification(audio::Token token) -> bool            = 0;
+            virtual auto handleAudioEofNotification(audio::Token token) -> bool             = 0;
+            virtual auto handleAudioPausedNotification(audio::Token token) -> bool          = 0;
+            virtual auto handleAudioResumedNotification(audio::Token token) -> bool         = 0;
+            virtual auto handlePlayOrPauseRequest() -> bool                                 = 0;
         };
     };
 
@@ -68,8 +68,8 @@ namespace app::music_player
     {
       public:
         SongsPresenter(app::ApplicationCommon *app,
-                                std::shared_ptr<app::music::SongsModel> model,
-                                std::unique_ptr<AbstractAudioOperations> &&audioOperations);
+                       std::shared_ptr<app::music::SongsModel> model,
+                       std::unique_ptr<AbstractAudioOperations> &&audioOperations);
 
         [[nodiscard]] auto getModel() const -> std::shared_ptr<app::music::SongsModel> override;
 

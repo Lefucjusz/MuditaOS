@@ -10,8 +10,9 @@
 #include <i18n/i18n.hpp>
 #include <product/version.hpp>
 
-TechnicalInformationModel::TechnicalInformationModel(std::unique_ptr<AbstractFactoryData> &&factoryData,
-                                                     std::unique_ptr<AbstractTechnicalInformationRepository> &&repository)
+TechnicalInformationModel::TechnicalInformationModel(
+    std::unique_ptr<AbstractFactoryData> &&factoryData,
+    std::unique_ptr<AbstractTechnicalInformationRepository> &&repository)
     : factoryData{std::move(factoryData)}, technicalInformationRepository{std::move(repository)}
 {
     createData();

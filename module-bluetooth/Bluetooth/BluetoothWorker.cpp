@@ -237,7 +237,8 @@ auto BluetoothWorker::handleMessage(uint32_t queueID) -> bool
                             ss << " 0x" << std::hex << static_cast<int>(blueKitchen.readBuffer[i]);
                         }
                         return ss.str();
-                    }().c_str());
+                    }()
+                                 .c_str());
 
         blueKitchen.readLength = 0;
 

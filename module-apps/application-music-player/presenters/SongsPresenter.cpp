@@ -11,7 +11,7 @@ namespace
     constexpr auto songProgressTimerName     = "MusicPlayerSongProgress";
 
     constexpr auto autoStopTimerDelay = std::chrono::minutes{30};
-    constexpr auto autoStopTimerName = "MusicPlayerAutoStop";
+    constexpr auto autoStopTimerName  = "MusicPlayerAutoStop";
 } // namespace
 
 namespace app::music_player
@@ -22,12 +22,16 @@ namespace app::music_player
         : songsModel{std::move(songsModel)}, audioOperations{std::move(audioOperations)}
     {
         songProgressTimer = sys::TimerFactory::createPeriodicTimer(
-            app, songProgressTimerName, songProgressTimerInterval, [this]([[maybe_unused]] sys::Timer &t) { handleTrackProgressTick(); });
+            app, songProgressTimerName, songProgressTimerInterval, [this]([[maybe_unused]] sys::Timer &t) {
+                handleTrackProgressTick();
+            });
 
-        autoStopTimer = sys::TimerFactory::createSingleShotTimer(app, autoStopTimerName, autoStopTimerDelay, [this]([[maybe_unused]] sys::Timer &t){
-            LOG_INFO("Stopping paused playback after %" PRIi64 " minutes of inactivity", autoStopTimerDelay.count());
-            stop();
-        });
+        autoStopTimer = sys::TimerFactory::createSingleShotTimer(
+            app, autoStopTimerName, autoStopTimerDelay, [this]([[maybe_unused]] sys::Timer &t) {
+                LOG_INFO("Stopping paused playback after %" PRIi64 " minutes of inactivity",
+                         autoStopTimerDelay.count());
+                stop();
+            });
     }
 
     auto SongsPresenter::getModel() const -> std::shared_ptr<app::music::SongsModel>
@@ -78,9 +82,10 @@ namespace app::music_player
         }
 
         startAutoStopTimer();
-        const auto operationStatus = audioOperations->pause(currentFileToken.value(), [this](audio::RetCode retCode, const audio::Token &token) {
-            pauseCallback(retCode, token);
-        });
+        const auto operationStatus =
+            audioOperations->pause(currentFileToken.value(), [this](audio::RetCode retCode, const audio::Token &token) {
+                pauseCallback(retCode, token);
+            });
         return operationStatus;
     }
 
@@ -247,8 +252,9 @@ namespace app::music_player
             secondsTotal = activatedRecord->audioProperties.songLength;
         }
 
-        const auto now               = std::chrono::system_clock::now();
-        const auto millisecondsToAdd = std::chrono::duration_cast<std::chrono::milliseconds>(now - songProgressTimestamp);
+        const auto now = std::chrono::system_clock::now();
+        const auto millisecondsToAdd =
+            std::chrono::duration_cast<std::chrono::milliseconds>(now - songProgressTimestamp);
         songMillisecondsElapsed += millisecondsToAdd;
         songProgressTimestamp = now;
 
@@ -278,7 +284,7 @@ namespace app::music_player
         refreshView();
     }
 
-    auto SongsPresenter::requestAudioOperation(const std::string &filePath)  -> bool
+    auto SongsPresenter::requestAudioOperation(const std::string &filePath) -> bool
     {
         songsModel->initRepository();
         const auto &currentSongContext = songsModel->getCurrentSongContext();
@@ -329,7 +335,8 @@ namespace app::music_player
         }
     }
 
-    auto SongsPresenter::playCallback(audio::RetCode retCode, const audio::Token &token, const std::string &filePath) -> void
+    auto SongsPresenter::playCallback(audio::RetCode retCode, const audio::Token &token, const std::string &filePath)
+        -> void
     {
         waitingToPlay = false;
         if (retCode != audio::RetCode::Success || !token.IsValid()) {

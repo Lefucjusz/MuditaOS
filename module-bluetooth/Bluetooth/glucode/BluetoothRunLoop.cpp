@@ -36,14 +36,12 @@ namespace bluetooth
     void RunLoop::init()
     {
         timers                 = nullptr;
-        btstackRunLoopQueue = xQueueCreate(runLoopQueueLength, runLoopQueueItemSize);
+        btstackRunLoopQueue    = xQueueCreate(runLoopQueueLength, runLoopQueueItemSize);
 
         // Task to handle to optimize 'run on main thread'
         btstackRunLoopTask = xTaskGetCurrentTaskHandle();
 
-        LOG_INFO("Run loop init, task %p, queue item size %zu",
-                 btstackRunLoopTask,
-                 sizeof(FunctionCallType));
+        LOG_INFO("Run loop init, task %p, queue item size %zu", btstackRunLoopTask, sizeof(FunctionCallType));
     }
 
     void RunLoop::enableDataSourceCallbacks(btstack_data_source_t *dataSource, std::uint16_t callbackTypes)
@@ -105,7 +103,7 @@ namespace bluetooth
             }
         }
         timerSource->item.next = it->next;
-        it->next = reinterpret_cast<btstack_linked_item_t *>(timerSource);
+        it->next               = reinterpret_cast<btstack_linked_item_t *>(timerSource);
         trigger();
     }
 
@@ -123,7 +121,8 @@ namespace bluetooth
     void RunLoop::start()
     {
         if (btstackTimer == nullptr) {
-            btstackTimer = xTimerCreate("BTStackTimer", pdMS_TO_TICKS(defaultTimerPeriodMs), pdTRUE, nullptr, triggerCallback);
+            btstackTimer =
+                xTimerCreate("BTStackTimer", pdMS_TO_TICKS(defaultTimerPeriodMs), pdTRUE, nullptr, triggerCallback);
             xTimerStart(btstackTimer, 0);
         }
     }
@@ -133,7 +132,7 @@ namespace bluetooth
         // Process registered function calls on run loop thread
         while (true) {
             FunctionCallType message = {nullptr, nullptr};
-            const auto res = xQueueReceive(btstackRunLoopQueue, &message, 0);
+            const auto res           = xQueueReceive(btstackRunLoopQueue, &message, 0);
             if (res == pdFALSE) {
                 break;
             }
@@ -145,7 +144,7 @@ namespace bluetooth
         // Process timers and get next timeout
         std::uint32_t timeoutMs = defaultTimerPeriodMs;
         while (timers != nullptr) {
-            auto timerSource = reinterpret_cast<btstack_timer_source_t *>(timers);
+            auto timerSource   = reinterpret_cast<btstack_timer_source_t *>(timers);
             const auto now     = getTimeMs();
             const auto deltaMs = btstack_time_delta(timerSource->timeout, now);
             if (deltaMs > 0) {

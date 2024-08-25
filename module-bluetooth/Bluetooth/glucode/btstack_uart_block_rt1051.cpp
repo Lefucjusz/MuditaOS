@@ -92,21 +92,21 @@ namespace
     {}
 
     const btstack_uart_block_t btstack_uart_posix = {
-        /* int  (*init)(hci_transport_config_uart_t * config); */           uart_rt1051_init,
-        /* int  (*open)(void); */                                           uart_rt1051_open,
-        /* int  (*close)(void); */                                          uart_rt1051_close,
-        /* void (*set_block_received)(void (*handler)(void)); */            uart_rt1051_set_block_received,
-        /* void (*set_block_sent)(void (*handler)(void)); */                uart_rt1051_set_block_sent,
-        /* int  (*set_baudrate)(uint32_t baudrate); */                      uart_rt1051_set_baudrate,
-        /* int  (*set_parity)(int parity); */                               uart_rt1051_set_parity,
-        /* int  (*set_flowcontrol)(int flowcontrol); */                     nullptr,
-        /* void (*receive_block)(uint8_t *buffer, uint16_t len); */         uart_rt1051_receive_block,
-        /* void (*send_block)(const uint8_t *buffer, uint16_t length); */   uart_rt1051_send_block,
-        /* int (*get_supported_sleep_modes)(); */                           btstack_uart_rt1051_get_supported_sleep_modes,
-        /* void (*set_sleep)(btstack_uart_sleep_mode_t sleep_mode); */      btstack_uart_rt1051_set_sleep,
-        /* void (*set_wakeup_handler)(void (*handler)(void)); */            btstack_uart_rt1051_set_wakeup_handler,
+        /* int  (*init)(hci_transport_config_uart_t * config); */ uart_rt1051_init,
+        /* int  (*open)(void); */ uart_rt1051_open,
+        /* int  (*close)(void); */ uart_rt1051_close,
+        /* void (*set_block_received)(void (*handler)(void)); */ uart_rt1051_set_block_received,
+        /* void (*set_block_sent)(void (*handler)(void)); */ uart_rt1051_set_block_sent,
+        /* int  (*set_baudrate)(uint32_t baudrate); */ uart_rt1051_set_baudrate,
+        /* int  (*set_parity)(int parity); */ uart_rt1051_set_parity,
+        /* int  (*set_flowcontrol)(int flowcontrol); */ nullptr,
+        /* void (*receive_block)(uint8_t *buffer, uint16_t len); */ uart_rt1051_receive_block,
+        /* void (*send_block)(const uint8_t *buffer, uint16_t length); */ uart_rt1051_send_block,
+        /* int (*get_supported_sleep_modes)(); */ btstack_uart_rt1051_get_supported_sleep_modes,
+        /* void (*set_sleep)(btstack_uart_sleep_mode_t sleep_mode); */ btstack_uart_rt1051_set_sleep,
+        /* void (*set_wakeup_handler)(void (*handler)(void)); */ btstack_uart_rt1051_set_wakeup_handler,
     };
-}
+} // namespace
 
 const btstack_uart_block_t *btstack_uart_block_rt1051_instance()
 {

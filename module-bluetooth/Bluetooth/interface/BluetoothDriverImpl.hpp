@@ -24,7 +24,10 @@ namespace bluetooth
         std::unique_ptr<bluetooth::GAP> gap;
         static PowerOnCallback powerOnCallback;
 
-        static void hciPacketHandler(std::uint8_t packet_type, std::uint16_t channel, std::uint8_t *packet, std::uint16_t size);
+        static void hciPacketHandler(std::uint8_t packet_type,
+                                     std::uint16_t channel,
+                                     std::uint8_t *packet,
+                                     std::uint16_t size);
         static void localVersionInformationHandler(std::uint8_t *packet);
 #ifdef TARGET_RT1051
         [[maybe_unused]] auto runLoopInitTarget(const btstack_run_loop *runLoop) -> const btstack_uart_block_t *;

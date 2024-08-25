@@ -60,7 +60,7 @@ namespace hal::battery
 
         [[nodiscard]] virtual std::optional<Voltage> getBatteryVoltage() const = 0;
         [[nodiscard]] virtual std::optional<SOC> getSOC() const                = 0;
-        [[nodiscard]] virtual std::optional<Current> getCurrent() const = 0;
+        [[nodiscard]] virtual std::optional<Current> getCurrent() const        = 0;
         [[nodiscard]] virtual ChargingStatus getChargingStatus() const         = 0;
         [[nodiscard]] virtual ChargerPresence getChargerPresence() const       = 0;
         [[nodiscard]] virtual TemperatureState getTemperatureState() const     = 0;

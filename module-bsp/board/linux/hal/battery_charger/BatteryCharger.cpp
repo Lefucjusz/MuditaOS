@@ -48,9 +48,9 @@ namespace hal::battery
 
         xQueueHandle notificationChannel = nullptr;
         TaskHandle_t batteryWorkerHandle = nullptr;
-        std::uint8_t batteryLevel            = 100;
-        std::uint32_t batteryVoltageLevel     = 3700;
-        std::int32_t batteryCurrent = 0;
+        std::uint8_t batteryLevel         = 100;
+        std::uint32_t batteryVoltageLevel = 3700;
+        std::int32_t batteryCurrent       = 0;
         bool isPlugged                   = false;
         bool shouldRun                   = true;
     };

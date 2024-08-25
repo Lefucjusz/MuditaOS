@@ -49,7 +49,8 @@ class SignalStrength
     static constexpr auto rssi_tdscmda_invalid = 199;
     static constexpr auto rssi_tdscmda_low_dBm = -116;
     static constexpr auto rssi_tdscmda_max_dBm = -25;
-    static constexpr auto rssi_tdscmda_step = (rssi_tdscmda_low_dBm - rssi_tdscmda_max_dBm) / (rssi_tdscmda_max - rssi_low);
+    static constexpr auto rssi_tdscmda_step =
+        (rssi_tdscmda_low_dBm - rssi_tdscmda_max_dBm) / (rssi_tdscmda_max - rssi_low);
 
     static constexpr auto rssidBm_invalid          = 0;
     static constexpr auto rssidBm_four_bar_margin  = -60;

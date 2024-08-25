@@ -33,7 +33,7 @@ namespace gui
         };
 
         MusicPlayerMainWindow(app::ApplicationCommon *app,
-                                       std::shared_ptr<app::music_player::SongsContract::Presenter> presenter);
+                              std::shared_ptr<app::music_player::SongsContract::Presenter> presenter);
 
         void onBeforeShow(ShowMode mode, SwitchData *data) override;
 

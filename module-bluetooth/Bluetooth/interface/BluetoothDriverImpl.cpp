@@ -88,7 +88,10 @@ namespace bluetooth
         return Result::Code::Success;
     }
 
-    void Driver::hciPacketHandler(std::uint8_t packet_type, std::uint16_t channel, std::uint8_t *packet, std::uint16_t size)
+    void Driver::hciPacketHandler(std::uint8_t packet_type,
+                                  std::uint16_t channel,
+                                  std::uint8_t *packet,
+                                  std::uint16_t size)
     {
         bd_addr_t addr;
         if (packet_type != HCI_EVENT_PACKET) {

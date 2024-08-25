@@ -27,7 +27,8 @@ namespace app::music
         [[nodiscard]] auto getCachedFileIndex(const std::string &filePath) const -> std::size_t;
         [[nodiscard]] auto getPreviousFilePath(const std::string &currentFilePath) const -> std::string;
         [[nodiscard]] auto getNextFilePath(const std::string &currentFilePath) const -> std::string;
-        [[nodiscard]] auto getRecord(const std::string &filePath) const -> std::optional<db::multimedia_files::MultimediaFilesRecord>;
+        [[nodiscard]] auto getRecord(const std::string &filePath) const
+            -> std::optional<db::multimedia_files::MultimediaFilesRecord>;
 
         [[nodiscard]] auto getCurrentAlbum() const noexcept -> std::optional<db::multimedia_files::Album>;
         [[nodiscard]] auto getCurrentArtist() const noexcept -> std::optional<db::multimedia_files::Artist>;

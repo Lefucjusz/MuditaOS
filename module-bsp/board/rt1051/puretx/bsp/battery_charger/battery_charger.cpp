@@ -644,9 +644,10 @@ namespace bsp::battery_charger
                 .dir      = drivers::DriverGPIOPinParams::Direction::Input,
                 .irqMode  = drivers::DriverGPIOPinParams::InterruptMode::IntFallingEdge,
                 .defLogic = 0,
-                .pin      = static_cast<std::uint32_t>(BoardDefinitions::BATTERY_CHARGER_INTB_PIN)
-            };
-            chargerGpio = drivers::DriverGPIO::Create(static_cast<drivers::GPIOInstances>(BoardDefinitions::BATTERY_CHARGER_GPIO), drivers::DriverGPIOParams{});
+                .pin      = static_cast<std::uint32_t>(BoardDefinitions::BATTERY_CHARGER_INTB_PIN)};
+            chargerGpio =
+                drivers::DriverGPIO::Create(static_cast<drivers::GPIOInstances>(BoardDefinitions::BATTERY_CHARGER_GPIO),
+                                            drivers::DriverGPIOParams{});
             chargerGpio->ConfPin(INTBPinConfig);
             chargerGpio->EnableInterrupt(1 << static_cast<std::uint32_t>(BoardDefinitions::BATTERY_CHARGER_INTB_PIN));
 
@@ -655,9 +656,9 @@ namespace bsp::battery_charger
                 .dir      = drivers::DriverGPIOPinParams::Direction::Input,
                 .irqMode  = drivers::DriverGPIOPinParams::InterruptMode::IntRisingOrFallingEdge,
                 .defLogic = 0,
-                .pin      = static_cast<std::uint32_t>(BoardDefinitions::USB_PROTECTOR_ACK_PIN)
-            };
-            protectorGpio = drivers::DriverGPIO::Create(static_cast<drivers::GPIOInstances>(BoardDefinitions::USB_PROTECTOR_GPIO), drivers::DriverGPIOParams{});
+                .pin      = static_cast<std::uint32_t>(BoardDefinitions::USB_PROTECTOR_ACK_PIN)};
+            protectorGpio = drivers::DriverGPIO::Create(
+                static_cast<drivers::GPIOInstances>(BoardDefinitions::USB_PROTECTOR_GPIO), drivers::DriverGPIOParams{});
             protectorGpio->ConfPin(USBAckPinConfig);
             protectorGpio->EnableInterrupt(1 << static_cast<std::uint32_t>(BoardDefinitions::USB_PROTECTOR_ACK_PIN));
         }
