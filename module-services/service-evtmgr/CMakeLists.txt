@@ -7,7 +7,6 @@ target_sources(service-evtmgr PRIVATE
         EventManager.cpp
         WorkerEventCommon.cpp
         api/EventManagerServiceAPI.cpp
-        api/torch.cpp
         backlight-handler/BacklightHandlerCommon.cpp
         battery/BatteryController.cpp
         battery/BatteryController.hpp

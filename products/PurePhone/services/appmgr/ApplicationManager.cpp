@@ -24,7 +24,6 @@
 #include <service-desktop/ServiceDesktopName.hpp>
 #include <service-evtmgr/EVMessages.hpp>
 #include <service-evtmgr/ServiceEventManagerName.hpp>
-#include <service-evtmgr/torch.hpp>
 #include <sys/messages/TetheringPhoneModeChangeProhibitedMessage.hpp>
 #include <service-time/include/service-time/AlarmMessage.hpp>
 #include <service-time/include/service-time/AlarmServiceAPI.hpp>
@@ -564,10 +563,6 @@ namespace app::manager
             return;
         }
         if (phoneModeObserver->isTetheringOn()) {
-            autoLockTimer.start();
-            return;
-        }
-        if (event::service::api::isTorchOn()) {
             autoLockTimer.start();
             return;
         }
