@@ -105,7 +105,7 @@ namespace app::music_player
         auto updateTrackProgressRatio() -> void;
         auto resetTrackProgressRatio() -> void;
 
-        /// Request state dependant audio operation
+        /// Request state dependent audio operation
         auto requestAudioOperation(const std::string &filePath = {}) -> bool;
         auto setViewNavBarTemporaryMode(const std::string &text) -> void;
         auto restoreViewNavBarFromTemporaryMode() -> void;

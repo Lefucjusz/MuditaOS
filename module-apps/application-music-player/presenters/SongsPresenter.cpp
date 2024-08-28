@@ -206,6 +206,7 @@ namespace app::music_player
         }
         updateViewSongState();
         songProgressTimer.stop();
+        startAutoStopTimer();
         updateTrackProgressRatio();
         updateViewProgressState();
         refreshView();
@@ -225,6 +226,7 @@ namespace app::music_player
         updateViewSongState();
         songProgressTimestamp = std::chrono::system_clock::now();
         songProgressTimer.start();
+        stopAutoStopTimer();
         refreshView();
         return true;
     }
