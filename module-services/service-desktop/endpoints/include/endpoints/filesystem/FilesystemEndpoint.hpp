@@ -4,28 +4,27 @@
 #pragma once
 
 #include <endpoints/Endpoint.hpp>
-#include "FS_Helper.hpp"
+#include "FilesystemHelper.hpp"
 #include <Service/Service.hpp>
 #include "FileOperations.hpp"
 
 namespace sdesktop::endpoints
 {
-
     class FilesystemEndpoint : public Endpoint
     {
-        const std::unique_ptr<FS_Helper> helper;
-
       public:
-        static auto createInstance(sys::Service *ownerServicePtr) -> std::unique_ptr<Endpoint>
-        {
-            return std::make_unique<FilesystemEndpoint>(ownerServicePtr, FileOperations::instance());
-        }
-
-        explicit FilesystemEndpoint(sys::Service *ownerServicePtr, FileOperations &fileOps)
-            : Endpoint(ownerServicePtr), helper(std::make_unique<FS_Helper>(ownerServicePtr, fileOps))
+        FilesystemEndpoint(sys::Service *ownerServicePtr, FileOperations &fileOperations)
+            : Endpoint(ownerServicePtr), helper(std::make_unique<FilesystemHelper>(ownerServicePtr, fileOperations))
         {}
 
-        auto handle(Context &context) -> void override;
-    };
+        static auto createInstance(sys::Service *ownerServicePtr) -> std::unique_ptr<Endpoint>
+        {
+            return std::make_unique<FilesystemEndpoint>(ownerServicePtr, FileOperations::getInstance());
+        }
 
+        auto handle(Context &context) -> void override;
+
+      private:
+        const std::unique_ptr<FilesystemHelper> helper;
+    };
 } // namespace sdesktop::endpoints

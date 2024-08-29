@@ -2,7 +2,7 @@
 // For licensing, see https://github.com/mudita/MuditaOS/LICENSE.md
 
 #include <endpoints/filesystem/FilesystemEndpoint.hpp>
-#include <endpoints/filesystem/FS_Helper.hpp>
+#include <endpoints/filesystem/FilesystemHelper.hpp>
 #include <endpoints/message/Sender.hpp>
 #include <log/log.hpp>
 
@@ -32,5 +32,4 @@ namespace sdesktop::endpoints
             LOG_ERROR("Response set when we already handled response in handler");
         }
     }
-
 } // namespace sdesktop::endpoints

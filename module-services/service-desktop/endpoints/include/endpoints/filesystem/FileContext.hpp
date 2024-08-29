@@ -3,80 +3,70 @@
 
 #pragma once
 
-#include "system/SystemReturnCodes.hpp"
 #include <crc32.h>
-
 #include <filesystem>
 #include <vector>
 #include <map>
 #include <atomic>
 #include <fstream>
-#include <iostream>
 
 class FileContext
 {
   public:
-    explicit FileContext(const std::filesystem::path &path,
-                         std::size_t size,
-                         std::size_t chunkSize,
-                         std::size_t offset = 0);
+    FileContext(const std::filesystem::path &path, std::size_t size, std::size_t chunkSize, std::size_t offset = 0);
 
-    virtual ~FileContext();
+    virtual ~FileContext() = default;
 
-    auto validateChunkRequest(std::uint32_t chunkNo) const -> bool;
+    [[nodiscard]] auto validateChunkRequest(std::uint32_t chunkNo) const -> bool;
+    [[nodiscard]] auto reachedEOF() const -> bool;
 
-    auto advanceFileOffset(std::size_t bySize) -> void;
+    auto advanceFileOffset(std::size_t sizeToAdvance) -> void;
 
-    auto reachedEOF() const -> bool;
+    [[nodiscard]] auto chunksForSize(std::size_t size) const -> std::size_t;
+    [[nodiscard]] auto expectedChunkInFile() const -> std::size_t;
+    [[nodiscard]] auto totalChunksInFile() const -> std::size_t;
 
-    auto chunksInQuantity(std::size_t quantity) const -> std::size_t;
-
-    auto totalChunksInFile() const -> std::size_t;
-
-    auto expectedChunkInFile() const -> std::size_t;
-
-    auto fileHash() const -> std::string;
+    [[nodiscard]] auto fileHash() const -> std::string;
 
   protected:
-    std::filesystem::path path{};
-    std::size_t size{};
-    std::size_t offset{};
-    std::size_t chunkSize{};
-    CRC32 runningCrc32Digest;
+    static constexpr auto firstValidChunkNo = 1;
+
+    std::filesystem::path path;
+    std::size_t size;
+    std::size_t offset;
+    std::size_t chunkSize;
+    CRC32 computedCrc32;
 };
 
 class FileReadContext : public FileContext
 {
   public:
-    explicit FileReadContext(const std::filesystem::path &path,
-                             std::size_t size,
-                             std::size_t chunkSize,
-                             std::size_t offset = 0);
+    FileReadContext(const std::filesystem::path &path, std::size_t size, std::size_t chunkSize, std::size_t offset = 0);
 
-    ~FileReadContext();
+    ~FileReadContext() override = default;
 
     auto read() -> std::vector<std::uint8_t>;
+
+  private:
+    std::ifstream file;
 };
 
 class FileWriteContext : public FileContext
 {
   public:
-    explicit FileWriteContext(const std::filesystem::path &path,
-                              std::size_t size,
-                              std::size_t chunkSize,
-                              std::string crc32Digest,
-                              std::size_t offset = 0);
+    FileWriteContext(const std::filesystem::path &path,
+                     std::size_t size,
+                     std::size_t chunkSize,
+                     const std::string &receivedCrc32,
+                     std::size_t offset = 0);
 
-    ~FileWriteContext();
-
-    auto crc32Matches() const -> bool;
-
-    auto removeFile() -> void;
+    ~FileWriteContext() override = default;
 
     auto write(const std::vector<std::uint8_t> &data) -> void;
+    auto crc32Matches() const -> bool;
+    auto removeFile() -> void;
 
   private:
-    std::string crc32Digest{};
-
-    std::ofstream file{};
+    std::string receivedCrc32;
+    std::ofstream file;
 };

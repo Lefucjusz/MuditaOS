@@ -11,7 +11,7 @@ elseif (${BOARD_REVISION} EQUAL 6)
     target_compile_definitions(
         board-config
             INTERFACE
-        PROJECT_CONFIG_USER_DYNMEM_SIZE=10079612
+        PROJECT_CONFIG_USER_DYNMEM_SIZE=10276218
         HW_SDRAM_64_MB=0
     )
 else ()

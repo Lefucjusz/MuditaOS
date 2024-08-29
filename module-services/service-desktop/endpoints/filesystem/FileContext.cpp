@@ -9,41 +9,15 @@
 FileContext::FileContext(const std::filesystem::path &path, std::size_t size, std::size_t chunkSize, std::size_t offset)
     : path(path), size(size), offset(offset), chunkSize(chunkSize)
 {
-    if (!size || !chunkSize) {
+    if ((size == 0) || (chunkSize == 0)) {
         throw std::invalid_argument("Invalid FileContext arguments");
     }
-
-    runningCrc32Digest.reset();
+    computedCrc32.reset();
 }
 
-FileContext::~FileContext()
-{}
-
-FileReadContext::FileReadContext(const std::filesystem::path &path,
-                                 std::size_t size,
-                                 std::size_t chunkSize,
-                                 std::size_t offset)
-    : FileContext(path, size, chunkSize, offset)
-{}
-
-FileReadContext::~FileReadContext()
-{}
-
-FileWriteContext::FileWriteContext(const std::filesystem::path &path,
-                                   std::size_t size,
-                                   std::size_t chunkSize,
-                                   std::string crc32Digest,
-                                   std::size_t offset)
-    : FileContext(path, size, chunkSize, offset), crc32Digest(std::move(crc32Digest)),
-      file(path, std::ios::binary | std::ios::out)
-{}
-
-FileWriteContext::~FileWriteContext()
-{}
-
-auto FileContext::advanceFileOffset(std::size_t bySize) -> void
+auto FileContext::validateChunkRequest(std::uint32_t chunkNo) const -> bool
 {
-    offset += bySize;
+    return (chunkNo >= firstValidChunkNo) && (chunkNo <= totalChunksInFile()) && (chunkNo == expectedChunkInFile());
 }
 
 auto FileContext::reachedEOF() const -> bool
@@ -51,97 +25,107 @@ auto FileContext::reachedEOF() const -> bool
     return offset >= size;
 }
 
-auto FileContext::chunksInQuantity(std::size_t quantity) const -> std::size_t
+auto FileContext::advanceFileOffset(std::size_t sizeToAdvance) -> void
 {
-    return (quantity + chunkSize - 1) / chunkSize;
+    offset += sizeToAdvance;
 }
 
-auto FileContext::totalChunksInFile() const -> std::size_t
+auto FileContext::chunksForSize(std::size_t fileSize) const -> std::size_t
 {
-    return chunksInQuantity(size);
+    return (fileSize + chunkSize - 1) / chunkSize;
 }
 
 auto FileContext::expectedChunkInFile() const -> std::size_t
 {
-    return 1 + chunksInQuantity(offset);
+    return chunksForSize(offset) + 1;
 }
 
-auto FileContext::validateChunkRequest(std::uint32_t chunkNo) const -> bool
+auto FileContext::totalChunksInFile() const -> std::size_t
 {
-    return !(chunkNo < 1 || chunkNo > totalChunksInFile() || chunkNo != expectedChunkInFile());
+    return chunksForSize(size);
 }
 
 auto FileContext::fileHash() const -> std::string
 {
-    return runningCrc32Digest.getHash();
+    return computedCrc32.getHash();
 }
+
+FileReadContext::FileReadContext(const std::filesystem::path &path,
+                                 std::size_t size,
+                                 std::size_t chunkSize,
+                                 std::size_t offset)
+    : FileContext(path, size, chunkSize, offset), file(path, std::ios::binary)
+{}
 
 auto FileReadContext::read() -> std::vector<std::uint8_t>
 {
-    LOG_DEBUG("Getting file data");
-
-    std::ifstream file(path, std::ios::binary);
-
     if (!file.is_open() || file.fail()) {
-        LOG_ERROR("File %s open error", path.c_str());
+        LOG_ERROR("File '%s' open error", path.c_str());
         throw std::runtime_error("File open error");
     }
 
-    file.seekg(offset);
+    const auto bytesToRead = std::min(chunkSize, size - offset);
 
-    auto dataLeft = std::min(static_cast<std::size_t>(chunkSize), (size - offset));
+    std::vector<std::uint8_t> buffer(bytesToRead);
 
-    std::vector<std::uint8_t> buffer(dataLeft);
-
-    file.read(reinterpret_cast<char *>(buffer.data()), dataLeft);
-
+    file.read(reinterpret_cast<char *>(buffer.data()), bytesToRead);
     if (file.bad()) {
-        LOG_ERROR("File %s read error", path.c_str());
+        LOG_ERROR("File '%s' read error", path.c_str());
         throw std::runtime_error("File read error");
     }
 
-    runningCrc32Digest.add(buffer.data(), dataLeft);
+    computedCrc32.add(buffer.data(), bytesToRead);
+    advanceFileOffset(bytesToRead);
 
-    LOG_DEBUG("Read %u bytes", static_cast<unsigned int>(dataLeft));
-    advanceFileOffset(dataLeft);
+    LOG_INFO("Read %zuB", bytesToRead);
 
     if (reachedEOF()) {
-        LOG_DEBUG("Reached EOF");
+        LOG_INFO("Reached EOF of '%s'", path.c_str());
     }
-
     return buffer;
 }
+
+FileWriteContext::FileWriteContext(const std::filesystem::path &path,
+                                   std::size_t size,
+                                   std::size_t chunkSize,
+                                   const std::string &receivedCrc32,
+                                   std::size_t offset)
+    : FileContext(path, size, chunkSize, offset), receivedCrc32(receivedCrc32), file(path, std::ios::binary)
+{}
 
 auto FileWriteContext::write(const std::vector<std::uint8_t> &data) -> void
 {
     if (!file.is_open() || file.fail()) {
-        LOG_ERROR("File %s open error", path.c_str());
+        LOG_ERROR("File '%s' open error", path.c_str());
         throw std::runtime_error("File open error");
     }
 
-    auto dataLeft = std::min(static_cast<std::size_t>(chunkSize), (size - offset));
+    const auto bytesToWrite = std::min(chunkSize, size - offset);
 
-    file.write(reinterpret_cast<const char *>(data.data()), dataLeft);
+    file.write(reinterpret_cast<const char *>(data.data()), bytesToWrite);
     file.flush();
-
     if (file.bad()) {
-        LOG_ERROR("File %s write error", path.c_str());
+        LOG_ERROR("File '%s' write error", path.c_str());
         throw std::runtime_error("File write error");
     }
 
-    runningCrc32Digest.add(data.data(), dataLeft);
-
-    advanceFileOffset(dataLeft);
+    computedCrc32.add(data.data(), bytesToWrite);
+    advanceFileOffset(bytesToWrite);
 
     if (reachedEOF()) {
-        LOG_DEBUG("Reached EOF of %s", path.c_str());
+        LOG_INFO("Reached EOF of '%s'", path.c_str());
     }
 }
 
 auto FileWriteContext::crc32Matches() const -> bool
 {
-    LOG_DEBUG("Hash: %s", fileHash().c_str());
-    return crc32Digest == fileHash();
+    const auto &computedHash = fileHash();
+    const auto match         = (receivedCrc32 == computedHash);
+    LOG_INFO("Received CRC32: %s, computed CRC32: %s, matches: %s",
+             receivedCrc32.c_str(),
+             computedHash.c_str(),
+             match ? "yes" : "no");
+    return match;
 }
 
 auto FileWriteContext::removeFile() -> void

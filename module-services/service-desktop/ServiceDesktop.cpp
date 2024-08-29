@@ -383,5 +383,5 @@ auto ServiceDesktop::getOnboardingState() const -> sdesktop::endpoints::Onboardi
 
 auto ServiceDesktop::cleanFileSystemEndpointUndeliveredTransfers() -> void
 {
-    FileOperations::instance().cleanUpUndeliveredTransfers();
+    FileOperations::getInstance().cleanUpUndeliveredTransfers();
 }

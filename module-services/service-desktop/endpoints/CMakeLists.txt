@@ -55,7 +55,7 @@ target_sources(
         filesystem/FileContext.cpp
         filesystem/FileOperations.cpp
         filesystem/FilesystemEndpoint.cpp
-        filesystem/FS_Helper.cpp
+        filesystem/FilesystemHelper.cpp
         nullEndpoint/NullEndpoint.cpp
         restore/RestoreEndpoint.cpp
         restore/RestoreHelper.cpp
@@ -82,7 +82,7 @@ target_sources(
         include/endpoints/filesystem/FileContext.hpp
         include/endpoints/filesystem/FileOperations.hpp
         include/endpoints/filesystem/FilesystemEndpoint.hpp
-        include/endpoints/filesystem/FS_Helper.hpp
+        include/endpoints/filesystem/FilesystemHelper.hpp
         include/endpoints/nullEndpoint/NullEndpoint.hpp
         include/endpoints/restore/RestoreEndpoint.hpp
         include/endpoints/restore/RestoreHelper.hpp
