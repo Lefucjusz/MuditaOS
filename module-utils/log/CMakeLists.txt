@@ -30,7 +30,7 @@ target_link_libraries(log
 
 if(${PROJECT_TARGET} STREQUAL "TARGET_RT1051")
     if(${PRODUCT} STREQUAL "PurePhone")
-        set(CIRCULAR_BUFFER_SIZE 1024)
+        set(CIRCULAR_BUFFER_SIZE 512)
     elseif(${PRODUCT} STREQUAL "BellHybrid")
         set(CIRCULAR_BUFFER_SIZE 512)
     else()

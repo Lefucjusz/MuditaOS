@@ -118,12 +118,12 @@ auto ServiceDesktop::requestLogsFlush() -> void
 
 auto ServiceDesktop::getSerialNumber() const -> std::string
 {
-    return settings->getValue(sdesktop::pathFactoryDataSerial, settings::SettingsScope::Global);
+    return "6169"; // settings->getValue(sdesktop::pathFactoryDataSerial, settings::SettingsScope::Global);
 }
 
 auto ServiceDesktop::getCaseColour() const -> std::string
 {
-    return settings->getValue(sdesktop::pathFactoryDataCaseColour, settings::SettingsScope::Global);
+    return "black"; // settings->getValue(sdesktop::pathFactoryDataCaseColour, settings::SettingsScope::Global);
 }
 
 auto ServiceDesktop::getDeviceToken() -> std::string
