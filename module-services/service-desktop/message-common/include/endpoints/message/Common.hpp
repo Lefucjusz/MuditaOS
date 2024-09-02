@@ -9,7 +9,6 @@
 
 namespace sdesktop::endpoints::message
 {
-
     inline constexpr auto size_length = 9U;
     inline constexpr auto size_header = size_length + 1;
 
@@ -41,6 +40,7 @@ namespace sdesktop::endpoints::message
     {
         msg.erase(msg.begin(), msg.begin() + pos);
     }
+
     inline std::string extractPayload(std::string &msg, size_t payloadLength)
     {
         if (msg.size() > payloadLength) {
@@ -51,18 +51,13 @@ namespace sdesktop::endpoints::message
         }
     }
 
-    inline std::unique_ptr<std::string> buildResponse(const json11::Json &msg)
+    inline std::string *buildResponse(const json11::Json &msg)
     {
-        const auto jsonStr                 = msg.dump();
-        const auto pos                     = 0;
-        const auto count                   = 1;
-        std::string responsePayloadSizeStr = std::to_string(jsonStr.size());
+        const auto &payload           = msg.dump();
+        auto payloadSize              = std::to_string(payload.size());
+        const auto payloadSizePadding = size_length - payloadSize.size();
+        payloadSize.insert(0, payloadSizePadding, '0');
 
-        while (responsePayloadSizeStr.length() < message::size_length) {
-            responsePayloadSizeStr.insert(pos, count, '0');
-        }
-
-        return std::make_unique<std::string>(message::endpointChar + responsePayloadSizeStr + jsonStr);
+        return new std::string(message::endpointChar + payloadSize + payload);
     }
-
 } // namespace sdesktop::endpoints::message

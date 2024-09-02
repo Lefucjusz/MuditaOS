@@ -9,7 +9,7 @@ std::optional<std::string> StringCircularBuffer::get()
         return std::nullopt;
     }
 
-    const auto val = buffer[tail];
+    auto val = buffer[tail];
 
     full                  = false;
     tail                  = (tail + 1) % capacity;

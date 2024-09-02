@@ -24,7 +24,7 @@ class FileOperations
     /* Make chunk size divisible by 3 * 4 = 12, so that the same size can be used
      * regardless of the direction of data flow. */
     static constexpr auto minimumChunkSize    = base64ToBinFactor * binToBase64Factor;
-    static constexpr auto chunkSizeMultiplier = 6U * 1024U;
+    static constexpr auto chunkSizeMultiplier = 4U * 1024U;
     static constexpr auto chunkSize           = chunkSizeMultiplier * minimumChunkSize;
 
     struct EncodedDataWithCrc32

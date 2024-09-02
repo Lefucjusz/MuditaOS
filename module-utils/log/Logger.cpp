@@ -11,11 +11,11 @@
 
 namespace
 {
-    inline constexpr int statusSuccess         = 1;
-    inline constexpr auto streamBufferSize     = 64 * 1024;
-    inline constexpr auto logFileNamePrefix    = "MuditaOS";
-    inline constexpr auto logFileNameExtension = ".log";
-    inline constexpr auto logFileNameSeparator = "_";
+    constexpr int statusSuccess         = 1;
+    constexpr auto streamBufferSize     = 64 * 1024;
+    constexpr auto logFileNamePrefix    = "MuditaOS";
+    constexpr auto logFileNameExtension = ".log";
+    constexpr auto logFileNameSeparator = "_";
 } // namespace
 
 namespace Log
@@ -98,7 +98,7 @@ namespace Log
 
         std::string logs;
         while (!buffer.getFlushBuffer()->isEmpty()) {
-            const auto msg = buffer.getFlushBuffer()->get();
+            const auto &msg = buffer.getFlushBuffer()->get();
             if (msg.has_value()) {
                 logs += msg.value();
             }
@@ -202,7 +202,7 @@ namespace Log
             logFileName = std::string(logFileNamePrefix) + logFileNameSeparator + osMetadata + logFileNameExtension;
         }
 
-        const auto logFilePath = logDirectoryPath / logFileName;
+        const auto &logFilePath = logDirectoryPath / logFileName;
 
         std::error_code errorCode;
         auto firstDump = !std::filesystem::exists(logFilePath, errorCode);

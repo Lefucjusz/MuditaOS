@@ -16,9 +16,8 @@ void sdesktop::endpoints::sender::setSendQueueHandle(QueueHandle_t handle)
 
 void sdesktop::endpoints::sender::putToSendQueue(const json11::Json &msg)
 {
-
     if (uxQueueSpacesAvailable(sendQueue) != 0) {
-        auto responseString = message::buildResponse(msg).release();
-        xQueueSend(sendQueue, &responseString, portMAX_DELAY);
+        auto response = message::buildResponse(msg);
+        xQueueSend(sendQueue, &response, portMAX_DELAY);
     }
 }
