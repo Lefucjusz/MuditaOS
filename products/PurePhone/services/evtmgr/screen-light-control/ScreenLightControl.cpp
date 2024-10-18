@@ -6,6 +6,9 @@
 #include <Timers/TimerFactory.hpp>
 #include <Service/Service.hpp>
 
+#include <system/Constants.hpp>
+#include <system/messages/SentinelRegistrationMessage.hpp>
+
 namespace pure::screen_light_control
 {
     namespace
@@ -14,17 +17,23 @@ namespace pure::screen_light_control
     }
 
     ScreenLightController::ScreenLightController(sys::Service *parent)
+        : cpuSentinel{std::make_shared<sys::CpuSentinel>(cpuSentinelName, parent)}
     {
-        controlTimer = sys::TimerFactory::createPeriodicTimer(parent,
-                                                              "LightControlTimer",
-                                                              std::chrono::milliseconds{CONTROL_TIMER_MS},
-                                                              [this](sys::Timer &) { controlTimerCallback(); });
-        readoutTimer = sys::TimerFactory::createPeriodicTimer(parent,
-                                                              "LightSensorReadoutTimer",
-                                                              std::chrono::milliseconds{READOUT_TIMER_MS},
-                                                              [this](sys::Timer &) { readoutTimerCallback(); });
+        auto sentinelRegistrationMsg = std::make_shared<sys::SentinelRegistrationMessage>(cpuSentinel);
+        parent->bus.sendUnicast(std::move(sentinelRegistrationMsg), service::name::system_manager);
 
-        setParameters(AutomaticModeParameters());
+        controlTimer =
+            sys::TimerFactory::createPeriodicTimer(parent,
+                                                   lightControlTimerName,
+                                                   std::chrono::milliseconds{controlTimerIntervalMs},
+                                                   [this]([[maybe_unused]] sys::Timer &t) { controlTimerCallback(); });
+        readoutTimer =
+            sys::TimerFactory::createPeriodicTimer(parent,
+                                                   lightReadoutTimerName,
+                                                   std::chrono::milliseconds{readoutTimerIntervalMs},
+                                                   [this]([[maybe_unused]] sys::Timer &t) { readoutTimerCallback(); });
+
+        setParameters(AutomaticModeParameters{});
     }
 
     ScreenLightController::~ScreenLightController()
@@ -32,12 +41,12 @@ namespace pure::screen_light_control
         disableTimers();
     }
 
-    void ScreenLightController::processRequest(Action action)
+    auto ScreenLightController::processRequest(Action action) -> void
     {
-        processRequest(action, Parameters());
+        processRequest(action, Parameters{});
     }
 
-    void ScreenLightController::processRequest(Action action, const Parameters &params)
+    auto ScreenLightController::processRequest(Action action, const Parameters &params) -> void
     {
         switch (action) {
         case Action::turnOff:
@@ -70,12 +79,12 @@ namespace pure::screen_light_control
         }
     }
 
-    void ScreenLightController::controlTimerCallback()
+    auto ScreenLightController::controlTimerCallback() -> void
     {
         bsp::eink_frontlight::setBrightness(::screen_light_control::functions::brightnessRampOut());
     }
 
-    void ScreenLightController::readoutTimerCallback()
+    auto ScreenLightController::readoutTimerCallback() -> void
     {
         if (!fadeOut) {
             ::screen_light_control::functions::calculateBrightness(bsp::light_sensor::readout());
@@ -97,26 +106,26 @@ namespace pure::screen_light_control
         return brightnessValue;
     }
 
-    void ScreenLightController::enableTimers()
+    auto ScreenLightController::enableTimers() -> void
     {
         controlTimer.start();
         readoutTimer.start();
     }
 
-    void ScreenLightController::disableTimers()
+    auto ScreenLightController::disableTimers() -> void
     {
         controlTimer.stop();
         readoutTimer.stop();
     }
 
-    void ScreenLightController::setParameters(const AutomaticModeParameters &params)
+    auto ScreenLightController::setParameters(const AutomaticModeParameters &params) -> void
     {
         if (lightOn && automaticMode == ScreenLightMode::Automatic) {
             disableTimers();
         }
 
         ::screen_light_control::functions::setRampStep(
-            100.0f * (static_cast<float>(CONTROL_TIMER_MS) / static_cast<float>(params.rampTimeMS)));
+            100.0f * (static_cast<float>(controlTimerIntervalMs) / static_cast<float>(params.rampTimeMS)));
         ::screen_light_control::functions::setHysteresis(params.brightnessHysteresis);
         ::screen_light_control::functions::setFunctionFromPoints(params.functionPoints);
 
@@ -125,13 +134,13 @@ namespace pure::screen_light_control
         }
     }
 
-    void ScreenLightController::setParameters(ManualModeParameters params)
+    auto ScreenLightController::setParameters(ManualModeParameters params) -> void
     {
         brightnessValue = params.manualModeBrightness;
         setManualBrightnessLevel();
     }
 
-    void ScreenLightController::enableAutomaticMode()
+    auto ScreenLightController::enableAutomaticMode() -> void
     {
         if (lightOn) {
             enableTimers();
@@ -139,19 +148,20 @@ namespace pure::screen_light_control
         automaticMode = ScreenLightMode::Automatic;
     }
 
-    void ScreenLightController::disableAutomaticMode()
+    auto ScreenLightController::disableAutomaticMode() -> void
     {
         disableTimers();
         automaticMode = ScreenLightMode::Manual;
         setManualBrightnessLevel();
     }
 
-    void ScreenLightController::turnOn()
+    auto ScreenLightController::turnOn() -> void
     {
         fadeOut = false;
 
         bsp::eink_frontlight::turnOn();
         bsp::light_sensor::wakeup();
+        lockCpuFrequency();
 
         if (automaticMode == ScreenLightMode::Automatic) {
             if (lightOn) {
@@ -168,34 +178,45 @@ namespace pure::screen_light_control
         lightOn = true;
     }
 
-    void ScreenLightController::setManualBrightnessLevel()
+    auto ScreenLightController::setManualBrightnessLevel() -> void
     {
         bsp::eink_frontlight::setBrightness(brightnessValue);
     }
 
-    void ScreenLightController::turnOff()
+    auto ScreenLightController::turnOff() -> void
     {
         bsp::eink_frontlight::turnOff();
         stashedReadout = bsp::light_sensor::readout();
         disableTimers();
         bsp::light_sensor::standby();
+        releaseCpuFrequency();
         lightOn = false;
         fadeOut = false;
     }
 
-    void ScreenLightController::handleFadeOut()
+    auto ScreenLightController::handleFadeOut() -> void
     {
         if (automaticMode == ScreenLightMode::Automatic) {
             fadeOut = true;
             // Set fadeout brightness as maximum or current ramp state if lower
-            auto rampState         = ::screen_light_control::functions::getRampState();
-            auto fadeOutBrightness = std::clamp(rampState, 0.0f, fadeOutBrightnessMax);
+            const auto rampState         = ::screen_light_control::functions::getRampState();
+            const auto fadeOutBrightness = std::clamp(rampState, 0.0f, fadeOutBrightnessMax);
             ::screen_light_control::functions::setRampTarget(fadeOutBrightness);
         }
     }
 
-    bool ScreenLightController::isFadeOutOngoing()
+    auto ScreenLightController::isFadeOutOngoing() -> bool
     {
         return fadeOut;
+    }
+
+    auto ScreenLightController::lockCpuFrequency() -> void
+    {
+        cpuSentinel->HoldMinimumFrequency(bsp::CpuFrequencyMHz::Level_2);
+    }
+
+    auto ScreenLightController::releaseCpuFrequency() -> void
+    {
+        cpuSentinel->ReleaseMinimumFrequency();
     }
 } // namespace pure::screen_light_control

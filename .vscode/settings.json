@@ -91,7 +91,8 @@
         "filesystem": "cpp",
         "numbers": "cpp",
         "semaphore": "cpp",
-        "byte": "cpp"
+        "byte": "cpp",
+        "format": "cpp"
     },
     "terminal.integrated.env.linux": {
         "GTK_PATH": ""

@@ -6,6 +6,7 @@
 #include <service-evtmgr/screen-light-control/ScreenLightControl.hpp>
 #include <service-evtmgr/screen-light-control/ScreenLightControlParameters.hpp>
 
+#include <SystemManager/CpuSentinel.hpp>
 #include <Timers/TimerHandle.hpp>
 
 #include <memory>
@@ -33,44 +34,52 @@ namespace pure::screen_light_control
         explicit ScreenLightController(sys::Service *parent);
         ~ScreenLightController() override;
 
-        void processRequest(Action action) override;
-        void processRequest(Action action, const Parameters &params) override;
+        auto processRequest(Action action) -> void override;
+        auto processRequest(Action action, const Parameters &params) -> void override;
 
         [[nodiscard]] auto isLightOn() const noexcept -> bool override;
-        [[nodiscard]] bool isAutoModeOn() const noexcept override;
+        [[nodiscard]] auto isAutoModeOn() const noexcept -> bool override;
         [[nodiscard]] auto getBrightnessValue() const noexcept -> bsp::eink_frontlight::BrightnessPercentage override;
 
         [[nodiscard]] auto isFadeOutOngoing() -> bool override;
 
       private:
-        void controlTimerCallback();
-        void readoutTimerCallback();
+        auto controlTimerCallback() -> void;
+        auto readoutTimerCallback() -> void;
 
-        void enableTimers();
-        void disableTimers();
+        auto enableTimers() -> void;
+        auto disableTimers() -> void;
 
-        void setParameters(const AutomaticModeParameters &params);
-        void setParameters(ManualModeParameters params);
-        void setManualBrightnessLevel();
+        auto setParameters(const AutomaticModeParameters &params) -> void;
+        auto setParameters(ManualModeParameters params) -> void;
+        auto setManualBrightnessLevel() -> void;
 
-        void turnOff();
-        void turnOn();
+        auto turnOff() -> void;
+        auto turnOn() -> void;
 
-        void enableAutomaticMode();
-        void disableAutomaticMode();
+        auto enableAutomaticMode() -> void;
+        auto disableAutomaticMode() -> void;
 
-        void handleFadeOut();
+        auto handleFadeOut() -> void;
 
-        static constexpr inline auto CONTROL_TIMER_MS = 25;
-        static constexpr inline auto READOUT_TIMER_MS = 500;
+        auto lockCpuFrequency() -> void;
+        auto releaseCpuFrequency() -> void;
 
+        static constexpr auto controlTimerIntervalMs = 25;
+        static constexpr auto readoutTimerIntervalMs = 500;
+
+        static constexpr auto lightControlTimerName = "LightControlTimer";
+        static constexpr auto lightReadoutTimerName = "LightReadoutTimer";
+        static constexpr auto cpuSentinelName       = "LightControl";
+
+        std::shared_ptr<sys::CpuSentinel> cpuSentinel;
         sys::TimerHandle controlTimer;
         sys::TimerHandle readoutTimer;
 
         bool lightOn                                               = false;
+        bool fadeOut                                               = false;
         ScreenLightMode automaticMode                              = ScreenLightMode::Manual;
         bsp::eink_frontlight::BrightnessPercentage brightnessValue = 0.0f;
-        bool fadeOut                                               = false;
         bsp::light_sensor::IlluminanceLux stashedReadout           = 0.0f;
     };
 } // namespace pure::screen_light_control
