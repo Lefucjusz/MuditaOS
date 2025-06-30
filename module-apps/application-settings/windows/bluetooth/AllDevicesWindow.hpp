@@ -15,17 +15,16 @@ namespace gui
         AllDevicesWindow(app::ApplicationCommon *app, std::shared_ptr<BluetoothSettingsModel> bluetoothSettingsModel);
 
       private:
-        void buildInterface() override;
+        auto buildInterface() -> void override;
         auto buildOptionsList() -> std::list<Option> override;
-        void onBeforeShow(ShowMode mode, SwitchData *data) override;
+        auto onBeforeShow(ShowMode mode, SwitchData *data) -> void override;
         auto onInput(const InputEvent &inputEvent) -> bool override;
-        UTF8 getTextOnCenter(const DeviceState &) const;
-        UTF8 getTextOnRight(const DeviceState &) const;
-        option::SettingRightItem getRightItem(const DeviceState &) const;
-        auto handleDeviceAction(const Devicei &) -> bool;
+        [[nodiscard]] auto getTextOnCenter(const DeviceState &state) const -> UTF8;
+        [[nodiscard]] auto getTextOnRight(const DeviceState &state) const -> UTF8;
+        [[nodiscard]] auto getRightItem(const DeviceState &state) const -> option::SettingRightItem;
+        auto handleDeviceAction(const Devicei &device) -> bool;
 
         std::shared_ptr<BluetoothSettingsModel> bluetoothSettingsModel{};
         OptionWindowDestroyer rai_destroyer = OptionWindowDestroyer(*this);
     };
-
 } // namespace gui

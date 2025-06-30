@@ -14,15 +14,14 @@
 
 namespace gui
 {
-
     AllDevicesWindow::AllDevicesWindow(app::ApplicationCommon *app,
                                        std::shared_ptr<BluetoothSettingsModel> bluetoothSettingsModel)
-        : BaseSettingsWindow(app, window::name::all_devices), bluetoothSettingsModel(bluetoothSettingsModel)
+        : BaseSettingsWindow(app, window::name::all_devices), bluetoothSettingsModel(std::move(bluetoothSettingsModel))
     {
         buildInterface();
     }
 
-    void AllDevicesWindow::buildInterface()
+    auto AllDevicesWindow::buildInterface() -> void
     {
         setTitle(utils::translate("app_settings_bluetooth_all_devices"));
 
@@ -35,20 +34,23 @@ namespace gui
                                         listview::ScrollBarType::Proportional);
 
         optionsList->prepareRebuildCallback = [this]() { recreateOptions(); };
+        optionsList->setBoundaries(Boundaries::Continuous);
         optionsModel->createData(options);
         setFocusItem(optionsList);
 
         header->navigationIndicatorAdd(new gui::header::AddElementAction(), gui::header::BoxSelection::Left);
     }
 
-    void AllDevicesWindow::onBeforeShow(ShowMode mode, SwitchData *data)
+    auto AllDevicesWindow::onBeforeShow(ShowMode mode, SwitchData *data) -> void
     {
         if (mode == ShowMode::GUI_SHOW_RETURN) {
             bluetoothSettingsModel->stopScan();
         }
+
         if (const auto bondedDevicesData = dynamic_cast<BondedDevicesData *>(data); bondedDevicesData != nullptr) {
             bluetoothSettingsModel->replaceDevicesList(bondedDevicesData->getDevices());
         }
+
         refreshOptionsList();
     }
 
@@ -57,6 +59,7 @@ namespace gui
         if (!inputEvent.isShortRelease()) {
             return AppWindow::onInput(inputEvent);
         }
+
         if (inputEvent.is(KeyCode::KEY_LEFT)) {
             bluetoothSettingsModel->requestScan();
             application->switchWindow(gui::window::name::dialog_settings,
@@ -67,16 +70,20 @@ namespace gui
                                           utils::translate("app_settings_bluetooth_searching_devices")}));
             return true;
         }
+
         if (inputEvent.is(KeyCode::KEY_LF) && !bluetoothSettingsModel->isDeviceListEmpty()) {
             navBar->setActive(nav_bar::Side::Left, false);
             navBar->setActive(nav_bar::Side::Center, false);
-            auto selectedDevice = bluetoothSettingsModel->getSelectedDevice();
+
+            const auto &selectedDevice = bluetoothSettingsModel->getSelectedDevice();
             if (selectedDevice.has_value()) {
                 bluetoothSettingsModel->requestDeviceUnpair(selectedDevice.value().get());
             }
+
             refreshOptionsList();
             return true;
         }
+
         return AppWindow::onInput(inputEvent);
     }
 
@@ -91,13 +98,13 @@ namespace gui
         }
 
         for (const auto &device : bluetoothSettingsModel->getDevices()) {
-            UTF8 textOnCenter                  = getTextOnCenter(device.deviceState);
-            option::SettingRightItem rightItem = getRightItem(device.deviceState);
-            UTF8 textOnRight                   = getTextOnRight(device.deviceState);
+            const auto &textOnCenter = getTextOnCenter(device.deviceState);
+            const auto &textOnRight  = getTextOnRight(device.deviceState);
+            const auto rightItem     = getRightItem(device.deviceState);
 
             optionsList.emplace_back(std::make_unique<gui::option::OptionSettings>(
                 device.name.data(),
-                [=](gui::Item & /*item*/) { return handleDeviceAction(device); },
+                [=]([[maybe_unused]] gui::Item &item) { return handleDeviceAction(device); },
                 [=](gui::Item &item) {
                     if (item.focus) {
                         this->setNavBarText(textOnCenter, nav_bar::Side::Center);
@@ -112,18 +119,17 @@ namespace gui
                 nullptr,
                 rightItem,
                 false,
-                std::move(textOnRight)));
+                textOnRight));
         }
+
         return optionsList;
     }
 
-    UTF8 AllDevicesWindow::getTextOnCenter(const DeviceState &state) const
+    auto AllDevicesWindow::getTextOnCenter(const DeviceState &state) const -> UTF8
     {
         switch (state) {
         case DeviceState::ConnectedAudio:
-            [[fallthrough]];
         case DeviceState::ConnectedVoice:
-            [[fallthrough]];
         case DeviceState::ConnectedBoth:
             return utils::translate("common_disconnect");
         case DeviceState::Paired:
@@ -132,16 +138,15 @@ namespace gui
             }
             return utils::translate("common_connect");
         case DeviceState::Pairing:
-            [[fallthrough]];
         case DeviceState::Connecting:
-            [[fallthrough]];
         case DeviceState::Unknown:
             break;
         }
-        return UTF8();
+
+        return {};
     }
 
-    UTF8 AllDevicesWindow::getTextOnRight(const DeviceState &state) const
+    auto AllDevicesWindow::getTextOnRight(const DeviceState &state) const -> UTF8
     {
         switch (state) {
         case DeviceState::ConnectedBoth:
@@ -155,24 +160,20 @@ namespace gui
         case DeviceState::ConnectedVoice:
             return utils::translate("app_settings_option_connected_voice");
         case DeviceState::Paired:
-            [[fallthrough]];
         case DeviceState::Unknown:
             break;
         }
-        return UTF8();
+
+        return {};
     }
 
-    option::SettingRightItem AllDevicesWindow::getRightItem(const DeviceState &state) const
+    auto AllDevicesWindow::getRightItem(const DeviceState &state) const -> option::SettingRightItem
     {
         switch (state) {
         case DeviceState::ConnectedBoth:
-            [[fallthrough]];
         case DeviceState::ConnectedAudio:
-            [[fallthrough]];
         case DeviceState::ConnectedVoice:
-            [[fallthrough]];
         case DeviceState::Connecting:
-            [[fallthrough]];
         case DeviceState::Pairing:
             return option::SettingRightItem::Text;
         case DeviceState::Paired:
@@ -180,21 +181,29 @@ namespace gui
         case DeviceState::Unknown:
             break;
         }
+
         return option::SettingRightItem::Disabled;
     }
 
     auto AllDevicesWindow::handleDeviceAction(const Devicei &device) -> bool
     {
-        if (device.deviceState == DeviceState::ConnectedBoth || device.deviceState == DeviceState::ConnectedAudio ||
-            device.deviceState == DeviceState::ConnectedVoice) {
+        switch (device.deviceState) {
+        case DeviceState::ConnectedBoth:
+        case DeviceState::ConnectedAudio:
+        case DeviceState::ConnectedVoice:
             bluetoothSettingsModel->requestDisconnection();
             refreshOptionsList();
+            break;
+        case DeviceState::Paired:
+            if (!bluetoothSettingsModel->isDeviceConnecting()) {
+                bluetoothSettingsModel->requestConnection(device);
+                refreshOptionsList();
+            }
+            break;
+        default:
+            break;
         }
-        else if (device.deviceState == DeviceState::Paired && !bluetoothSettingsModel->isDeviceConnecting()) {
-            bluetoothSettingsModel->requestConnection(device);
-            refreshOptionsList();
-        }
+
         return true;
     }
-
 } // namespace gui

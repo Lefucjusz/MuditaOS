@@ -14,7 +14,7 @@ namespace gui
     class ImageManager
     {
       public:
-        ImageManager(const ImageManager &)           = delete;
+        ImageManager(const ImageManager &) = delete;
         auto operator=(const ImageManager &) -> void = delete;
 
         virtual ~ImageManager();
